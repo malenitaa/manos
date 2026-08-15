@@ -1,0 +1,10 @@
+node_modules
+dist
+.DS_Store
+.vercel
+
+# Technical notes that stay local.
+README.privado.md
+
+# Se copia desde node_modules cada vez que arranca el proyecto.
+public/mediapipe

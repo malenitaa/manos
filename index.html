@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>manos — an instrument you play in the air</title>
+    <meta name="description" content="Play music with your hands in front of the camera. Everything runs in the browser." />
+    <meta name="color-scheme" content="dark" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✋</text></svg>"
+    />
+  </head>
+  <body>
+    <main id="stage">
+      <!-- The camera preview. Mirrored in CSS so it reads like a mirror. -->
+      <video id="video" playsinline muted></video>
+      <!-- Everything drawn on top: the wave, the labels, the hand skeletons. -->
+      <canvas id="canvas"></canvas>
+
+      <header id="brand">
+        <h1>manos</h1>
+        <p id="status"></p>
+      </header>
+
+      <nav id="tools">
+        <button id="song-toggle" type="button"></button>
+        <button id="help-toggle" type="button"></button>
+        <button id="record-toggle" type="button" aria-pressed="false"></button>
+        <button id="panel-toggle" type="button"></button>
+        <button id="feedback-toggle" type="button">🐛</button>
+      </nav>
+
+      <!-- The loaded song, one card per chord, following along as you play. -->
+      <div id="songstrip" class="gone"></div>
+
+      <aside id="panel"></aside>
+      <div id="legend"></div>
+
+      <!-- What each finger count plays, in the current key and family. -->
+      <div id="chordmap"></div>
+
+      <div id="help" class="gone">
+        <div id="help-card" class="card"></div>
+      </div>
+
+      <div id="song" class="gone">
+        <div id="song-card" class="card"></div>
+      </div>
+
+      <div id="start">
+        <div id="start-card" class="card"></div>
+      </div>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
