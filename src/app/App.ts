@@ -8,8 +8,9 @@
  *   4. Draw the wave and the label.
  */
 
-import { downloadBlob, DrumMachine, Recorder, Synth, takeFilename } from "../audio";
+import { downloadBlob, DrumMachine, MAX_VIDEO_SECONDS, Recorder, Synth, takeFilename, VideoRecorder } from "../audio";
 import type { TimbreId } from "../audio";
+import type { TakeKind } from "../ui/Overlay";
 import { expressionFromHand, familyFromHand, GestureReader, type Family, type PlayIntent } from "../gesture/mapping";
 import { Steady } from "../gesture/Steady";
 import { createTranslator, LOCALES, type Translate, type TranslationKey } from "../i18n";
@@ -49,6 +50,12 @@ export class App {
   private midi = new MidiOut();
   private drums = new DrumMachine(this.synth.context, this.synth.createExternalInput());
   private recorder = new Recorder(this.synth.context, this.synth.output);
+  private videoRecorder = new VideoRecorder(this.synth.context, this.synth.output);
+  /** The frame being encoded during a video take: camera plus everything drawn. */
+  private takeCanvas = document.createElement("canvas");
+  private takeKind: TakeKind | null = null;
+  private micStream: MediaStream | null = null;
+  private micNode: AudioNode | null = null;
   /** The conducted density, steadied so a finger mid-move cannot stutter the beat. */
   private drumDensity = new Steady<number>(2, 4);
   private visuals = new Visuals(this.canvas, this.synth.analyser);
@@ -100,8 +107,14 @@ export class App {
     this.applyResponse();
 
     this.song.whenChanged(() => this.applyLegendVisibility());
+    this.overlay.setVideoSupported(VideoRecorder.supported);
     this.overlay.whenStarted(() => void this.start());
-    this.overlay.whenRecordToggled(() => this.toggleRecording());
+    this.overlay.whenRecordToggled(() => {
+      // Recording? The button stops it. Otherwise it opens the what-to-record menu.
+      if (this.takeKind) void this.stopTake();
+      else this.overlay.toggleRecordMenu();
+    });
+    this.overlay.whenTakeChosen((kind) => void this.startTake(kind));
     this.overlay.whenFeedback(() => {
       window.location.href = buildFeedbackLink(this.t, { settings: this.settings, fps: this.tracker.fps });
     });
@@ -258,20 +271,115 @@ export class App {
     this.panel.render(this.t);
   }
 
-  private toggleRecording() {
-    if (this.recorder.isRecording) {
-      const take = this.recorder.stop();
-      this.overlay.setRecording(false);
-      if (take) {
-        const name = takeFilename();
-        downloadBlob(take, name);
-        this.notice = this.t("record.saved", { name });
-        this.noticeUntil = performance.now() + 4000;
+  /** Opens the microphone in music mode: no echo cancelling, no suppression. */
+  private async openMic(): Promise<AudioNode | null> {
+    try {
+      this.micStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      });
+    } catch {
+      return null;
+    }
+    this.micNode = this.synth.context.createMediaStreamSource(this.micStream);
+    return this.micNode;
+  }
+
+  /** Releases the microphone so the browser's recording light goes off. */
+  private closeMic() {
+    this.micStream?.getTracks().forEach((track) => track.stop());
+    this.micNode?.disconnect();
+    this.micStream = null;
+    this.micNode = null;
+  }
+
+  private showNotice(text: string) {
+    this.notice = text;
+    this.noticeUntil = performance.now() + 4000;
+  }
+
+  private async startTake(kind: TakeKind) {
+    if (this.takeKind) return;
+
+    let microphone: AudioNode | null = null;
+    if (kind.voice) {
+      microphone = await this.openMic();
+      if (!microphone) {
+        this.showNotice(this.t("record.mic.denied"));
+        return;
+      }
+    }
+
+    if (kind.video) {
+      // Even dimensions, because H.264 refuses odd ones.
+      this.takeCanvas.width = Math.min(1920, Math.floor(window.innerWidth / 2) * 2);
+      this.takeCanvas.height = Math.min(1080, Math.floor(window.innerHeight / 2) * 2);
+      const stream = this.takeCanvas.captureStream(30);
+      if (!this.videoRecorder.start(stream, microphone)) {
+        this.closeMic();
+        this.showNotice(this.t("record.unavailable"));
+        return;
       }
     } else {
+      if (microphone) this.recorder.attachSource(microphone);
       this.recorder.start();
-      this.overlay.setRecording(true);
     }
+
+    this.takeKind = kind;
+    this.overlay.setRecording(true);
+  }
+
+  private async stopTake() {
+    const kind = this.takeKind;
+    if (!kind) return;
+    this.takeKind = null;
+    this.overlay.setRecording(false);
+
+    let take: Blob | null = null;
+    let extension = "wav";
+    if (kind.video) {
+      take = await this.videoRecorder.stop();
+      extension = this.videoRecorder.extension;
+    } else {
+      take = this.recorder.stop();
+      if (this.micNode) this.recorder.detachSource(this.micNode);
+    }
+    this.closeMic();
+
+    if (take) {
+      const name = takeFilename(extension);
+      downloadBlob(take, name);
+      this.showNotice(this.t("record.saved", { name }));
+    }
+  }
+
+  /**
+   * One composed frame for the video take: the camera the way the player sees
+   * it — mirrored, dimmed — with everything the app draws on top. The browser
+   * cannot film the page itself, so the film is made by hand.
+   */
+  private drawTakeFrame() {
+    const context = this.takeCanvas.getContext("2d");
+    if (!context) return;
+    const w = this.takeCanvas.width;
+    const h = this.takeCanvas.height;
+
+    context.fillStyle = "#08070b";
+    context.fillRect(0, 0, w, h);
+
+    if (this.video.readyState >= 2 && this.video.videoWidth > 0) {
+      // The same object-fit: cover crop the stage shows.
+      const scale = Math.max(w / this.video.videoWidth, h / this.video.videoHeight);
+      const dw = this.video.videoWidth * scale;
+      const dh = this.video.videoHeight * scale;
+      context.save();
+      context.filter = "saturate(0.55) brightness(0.5) contrast(1.05)";
+      context.translate(w, 0);
+      context.scale(-1, 1);
+      context.drawImage(this.video, (w - dw) / 2, (h - dh) / 2, dw, dh);
+      context.restore();
+    }
+
+    context.drawImage(this.canvas, 0, 0, w, h);
   }
 
   private frame(time: number) {
@@ -329,12 +437,20 @@ export class App {
     if (this.settings.midi) this.midi.setNotes(frequencies, this.settings.tuning);
 
     this.draw(hands, chords, label, frequencies.length > 0, expression !== undefined);
+
+    // A video take films every frame right after it is drawn.
+    if (this.takeKind?.video) {
+      this.drawTakeFrame();
+      if (this.videoRecorder.seconds >= MAX_VIDEO_SECONDS) void this.stopTake();
+    }
+
     this.overlay.setStatus(this.statusLine(time));
   }
 
   private statusLine(time: number): string {
-    if (this.recorder.isRecording) {
-      return this.t("status.recording", { time: clock(this.recorder.seconds) });
+    if (this.takeKind) {
+      const seconds = this.takeKind.video ? this.videoRecorder.seconds : this.recorder.seconds;
+      return this.t("status.recording", { time: clock(seconds) });
     }
     if (time < this.noticeUntil) return this.notice;
     const base = this.t("status.running", { fps: this.tracker.fps, voices: this.synth.voiceCount });

@@ -43,8 +43,10 @@ you feel with your wrist.
   different instrument.
 - **Conducted drums.** The beat keeps time on its own clock; your hand conducts
   it — fingers for density, height for volume, a fist mutes it right on the bar.
-- **Record straight to WAV** — 24-bit stereo, limited so it cannot clip, ready
-  to drop into any DAW.
+- **Record your take** — sound as 24-bit WAV ready for any DAW, or a shareable
+  video of the whole performance (camera, hands, wave and sound, MP4), each
+  with or without your own voice from the microphone. Headphones keep the
+  voice clean. Nothing is uploaded; files save straight to disk.
 - **MIDI out** (Chrome/Edge) — the gestures play *your* synths: GarageBand,
   Ableton, hardware. Volume rides CC7, brightness CC74. On a Mac, enable the
   IAC Driver in Audio MIDI Setup and pick it as the output.

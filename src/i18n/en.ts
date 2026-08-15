@@ -200,6 +200,12 @@ export const enDictionary = {
   "record.stop": "Stop and save",
   "record.unavailable": "Recording is not available in this browser.",
   "record.saved": "saved {name}",
+  "record.audio": "Sound (WAV)",
+  "record.audioVoice": "Sound + my voice (WAV)",
+  "record.video": "Video of the take",
+  "record.videoVoice": "Video + my voice",
+  "record.voice.hint": "With headphones the voice comes out clean; on speakers the mic also hears the instrument.",
+  "record.mic.denied": "microphone permission is needed to record your voice",
 
   "help.open": "how to play",
   "help.close": "Close",

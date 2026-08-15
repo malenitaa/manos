@@ -198,6 +198,12 @@ export const esDictionary: Dictionary = {
   "record.stop": "Parar y guardar",
   "record.unavailable": "Este navegador no puede grabar.",
   "record.saved": "se guardó {name}",
+  "record.audio": "El sonido (WAV)",
+  "record.audioVoice": "El sonido + mi voz (WAV)",
+  "record.video": "El video de la toma",
+  "record.videoVoice": "El video + mi voz",
+  "record.voice.hint": "Con auriculares la voz sale limpia; con parlantes el mic también escucha al instrumento.",
+  "record.mic.denied": "hace falta permiso de micrófono para grabar tu voz",
 
   "help.open": "cómo se toca",
   "help.close": "Cerrar",

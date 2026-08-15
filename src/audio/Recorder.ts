@@ -40,6 +40,25 @@ export class Recorder {
     return this.frames / this.context.sampleRate;
   }
 
+  /**
+   * Mixes another source (the microphone) into the recording. Web Audio sums
+   * everything connected to the same input, so this is literally one wire.
+   * The extra source goes to the file only — never to the speakers, which is
+   * what keeps the microphone from feeding back.
+   */
+  attachSource(node: AudioNode) {
+    if (this.node) node.connect(this.node);
+  }
+
+  detachSource(node: AudioNode) {
+    if (!this.node) return;
+    try {
+      node.disconnect(this.node);
+    } catch {
+      // Was not connected; nothing to undo.
+    }
+  }
+
   /** Loads the worklet. Safe to call more than once. */
   async prepare(): Promise<void> {
     if (this.node) return;
@@ -171,10 +190,10 @@ export function downloadBlob(blob: Blob, filename: string) {
 }
 
 /** A filename that sorts by date and never collides. */
-export function takeFilename(): string {
+export function takeFilename(extension = "wav"): string {
   const now = new Date();
   const pad = (value: number) => String(value).padStart(2, "0");
   return `manos-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(
     now.getMinutes(),
-  )}${pad(now.getSeconds())}.wav`;
+  )}${pad(now.getSeconds())}.${extension}`;
 }

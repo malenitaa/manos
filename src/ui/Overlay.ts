@@ -6,6 +6,19 @@
 import { renderEmphasis, type Translate, type TranslationKey } from "../i18n";
 import { clear, element, requireElement } from "./dom";
 
+/** What a take can be: sound or video, with or without the microphone. */
+export interface TakeKind {
+  video: boolean;
+  voice: boolean;
+}
+
+const TAKE_OPTIONS: { kind: TakeKind; label: TranslationKey }[] = [
+  { kind: { video: false, voice: false }, label: "record.audio" },
+  { kind: { video: false, voice: true }, label: "record.audioVoice" },
+  { kind: { video: true, voice: false }, label: "record.video" },
+  { kind: { video: true, voice: true }, label: "record.videoVoice" },
+];
+
 const LEGEND_KEYS: TranslationKey[] = [
   "legend.degrees",
   "legend.thumb",
@@ -24,7 +37,10 @@ export class Overlay {
   private legend = requireElement("legend");
   private status = requireElement("status");
   private recordButton = requireElement<HTMLButtonElement>("record-toggle");
+  private recordMenu = requireElement("recmenu");
   private feedbackButton = requireElement<HTMLButtonElement>("feedback-toggle");
+  private onTakeChosen: ((kind: TakeKind) => void) | null = null;
+  private videoSupported = true;
   private startButton: HTMLButtonElement | null = null;
   private errorLine: HTMLElement | null = null;
   private onStart: (() => void) | null = null;
@@ -34,11 +50,51 @@ export class Overlay {
     this.t = t;
     this.renderStart(t);
     this.renderLegend(t);
+    this.renderRecordMenu(t);
     this.setRecording(this.recordButton.classList.contains("recording"));
     // The bug button is just the emoji; the words live in its tooltip.
     this.feedbackButton.title = t("feedback.label");
     this.feedbackButton.setAttribute("aria-label", t("feedback.label"));
     if (!this.status.textContent) this.status.textContent = t("app.waiting");
+  }
+
+  /** Tells the menu whether to offer video takes at all. Set before render. */
+  setVideoSupported(supported: boolean) {
+    this.videoSupported = supported;
+  }
+
+  private renderRecordMenu(t: Translate) {
+    clear(this.recordMenu);
+    for (const option of TAKE_OPTIONS) {
+      if (option.kind.video && !this.videoSupported) continue;
+      const row = element("button", { text: t(option.label), attrs: { type: "button" } });
+      row.addEventListener("click", () => {
+        this.closeRecordMenu();
+        this.onTakeChosen?.(option.kind);
+      });
+      this.recordMenu.append(row);
+    }
+    this.recordMenu.append(element("p", { className: "hint", text: t("record.voice.hint") }));
+  }
+
+  whenTakeChosen(handler: (kind: TakeKind) => void) {
+    this.onTakeChosen = handler;
+    // Clicking anywhere else puts the menu away. The record button itself is
+    // excluded so its own toggle does not immediately undo itself.
+    document.addEventListener("click", (event) => {
+      const target = event.target as Node;
+      if (!this.recordMenu.contains(target) && !this.recordButton.contains(target)) {
+        this.closeRecordMenu();
+      }
+    });
+  }
+
+  toggleRecordMenu() {
+    this.recordMenu.classList.toggle("gone");
+  }
+
+  closeRecordMenu() {
+    this.recordMenu.classList.add("gone");
   }
 
   whenFeedback(handler: () => void) {
