@@ -107,16 +107,21 @@ body {
   cursor: default;
 }
 
-/* The record button carries a dot that pulses while it is capturing. */
+/* The record button carries a dot that pulses while it is capturing. Flex
+   centres it against the text — vertical-align on a pseudo-element never
+   quite lined up. */
+#record-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
 #record-toggle::before {
   content: "";
-  display: inline-block;
   width: 7px;
   height: 7px;
-  margin-right: 7px;
   border: 1px solid currentColor;
   border-radius: 50%;
-  vertical-align: 1px;
 }
 
 #record-toggle.recording {
@@ -287,6 +292,12 @@ input[type="range"]::-moz-range-thumb {
 .check input {
   margin-top: 2px;
   accent-color: var(--accent);
+}
+
+/* A toggle that follows explanatory text needs air, or it reads as part of
+   the paragraph — the glide switch under the smoothness hint, for one. */
+.hint + .check {
+  margin-top: 16px;
 }
 
 /* --- Gesture legend --- */
