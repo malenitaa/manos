@@ -46,6 +46,8 @@ export interface GesturePlan {
 export interface PlannedChord extends SongChord {
   /** Null only for a diminished chord whose root is not in the key. */
   plan: GesturePlan | null;
+  /** How many times in a row the chart wrote this same chord. */
+  times: number;
 }
 
 export interface SongPlan {
@@ -117,7 +119,20 @@ export function chordMatches(targetPc: number, targetShape: string, playedPc: nu
 
 export function planInKey(sequence: SongChord[], root: number, scaleId: ScaleId): SongPlan {
   const scale = SCALES[scaleId] as StepScale;
-  const planned = sequence.map((chord) => ({ ...chord, plan: planChord(scale, root, chord) }));
+
+  // Consecutive repeats collapse into one card. On paper "Cm Cm" means the
+  // chord lasts two bars, but here duration belongs to the hand — the strip
+  // only ever needs to ask for *changes* of chord.
+  const planned: PlannedChord[] = [];
+  for (const chord of sequence) {
+    const previous = planned[planned.length - 1];
+    if (previous && previous.token === chord.token) {
+      previous.times += 1;
+      continue;
+    }
+    planned.push({ ...chord, plan: planChord(scale, root, chord), times: 1 });
+  }
+
   return {
     root,
     scaleId,

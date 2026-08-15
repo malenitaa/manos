@@ -275,8 +275,9 @@ export class SongPanel {
     if (!this.plan) return;
 
     this.plan.sequence.forEach((chord, index) => {
+      const name = chord.times > 1 ? `${chord.token} ×${chord.times}` : chord.token;
       const card = element("button", { className: "songcard", attrs: { type: "button" } }, [
-        element("span", { className: "n", text: chord.token }),
+        element("span", { className: "n", text: name }),
         element("span", { className: "g", text: chord.plan ? this.gestureText(chord.plan) : (this.t?.("song.unplayable") ?? "") }),
       ]);
       if (!chord.plan) card.classList.add("bad");
