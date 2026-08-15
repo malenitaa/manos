@@ -13,6 +13,7 @@ import type { TimbreId } from "../audio";
 import { expressionFromHand, familyFromHand, GestureReader, type Family, type PlayIntent } from "../gesture/mapping";
 import { Steady } from "../gesture/Steady";
 import { createTranslator, LOCALES, type Translate, type TranslationKey } from "../i18n";
+import { MidiOut } from "../midi/MidiOut";
 import { buildChord, buildNote, freePitch, freeStack, type Chord } from "../music";
 import { LETTER_NAMES, SCALES, SOLFEGE_NAMES, type ScaleId } from "../music/theory";
 import { NEUTRAL, paletteFor, type Palette } from "../render/palette";
@@ -45,6 +46,7 @@ export class App {
   private canvas = requireElement<HTMLCanvasElement>("canvas");
 
   private synth = new Synth();
+  private midi = new MidiOut();
   private drums = new DrumMachine(this.synth.context, this.synth.createExternalInput());
   private recorder = new Recorder(this.synth.context, this.synth.output);
   /** The conducted density, steadied so a finger mid-move cannot stutter the beat. */
@@ -76,6 +78,8 @@ export class App {
       requireElement<HTMLButtonElement>("panel-toggle"),
       this.settings,
       (key) => this.onSettingChanged(key),
+      () => this.midi.devices,
+      () => MidiOut.supported,
     );
     this.help = new Help(
       requireElement("help"),
@@ -168,6 +172,18 @@ export class App {
         if (this.settings.drums && this.running) this.drums.start();
         else this.drums.stop();
         break;
+      case "midi":
+        if (this.settings.midi) void this.enableMidi();
+        else {
+          this.midi.disable();
+          this.panel.render(this.t);
+        }
+        break;
+      case "midiOutput":
+        this.midi.setOutput(this.settings.midiOutput);
+        break;
+      case "midiMute":
+        break;
       case "tempo":
         this.drums.setTempo(this.settings.tempo);
         break;
@@ -233,6 +249,13 @@ export class App {
 
     this.drums.setTempo(this.settings.tempo);
     if (this.settings.drums) this.drums.start();
+    if (this.settings.midi) void this.enableMidi();
+  }
+
+  /** Asks for MIDI access, connects, and re-renders the panel with the devices. */
+  private async enableMidi() {
+    await this.midi.enable(this.settings.midiOutput || undefined);
+    this.panel.render(this.t);
   }
 
   private toggleRecording() {
@@ -300,6 +323,10 @@ export class App {
     } else {
       this.synth.setNoteGroups(groups);
     }
+
+    // Everything sounding is mirrored as MIDI, so the same gestures can play
+    // an external synth instead of — or alongside — the built-in one.
+    if (this.settings.midi) this.midi.setNotes(frequencies, this.settings.tuning);
 
     this.draw(hands, chords, label, frequencies.length > 0, expression !== undefined);
     this.overlay.setStatus(this.statusLine(time));
@@ -431,8 +458,12 @@ export class App {
     const glide = this.response.expressionGlide;
     this.volume = lerp(this.volume, targetVolume, glide);
     this.brightness = lerp(this.brightness, intent.brightness, glide * 0.85);
-    this.synth.setVolume(this.volume);
+    // With MIDI on and the built-in sound muted, the external synth is the
+    // instrument — the local engine just goes quiet.
+    const muted = this.settings.midi && this.settings.midiMute;
+    this.synth.setVolume(muted ? 0 : this.volume);
     this.synth.setBrightness(this.brightness);
+    if (this.settings.midi) this.midi.setControls(this.volume, this.brightness);
   }
 
   private draw(

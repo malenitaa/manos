@@ -32,6 +32,12 @@ export interface Settings {
   drums: boolean;
   /** Beats per minute for the drums. */
   tempo: number;
+  /** Mirror everything played as MIDI, for external synths and DAWs. */
+  midi: boolean;
+  /** The chosen MIDI output's id. Empty means the first one found. */
+  midiOutput: string;
+  /** Silence the built-in synth while MIDI is on. */
+  midiMute: boolean;
   reverb: number;
   delay: number;
   chorus: number;
@@ -66,6 +72,9 @@ export function defaultSettings(): Settings {
     timbreLeft: "sub",
     drums: false,
     tempo: 96,
+    midi: false,
+    midiOutput: "",
+    midiMute: false,
     reverb: 0.35,
     delay: 0.12,
     chorus: 0.25,
@@ -160,6 +169,9 @@ export function loadSettings(): Settings {
   if (isTimbreId(data.timbreLeft)) settings.timbreLeft = data.timbreLeft;
   settings.drums = readBoolean(data.drums, settings.drums);
   settings.tempo = Math.round(clampNumber(data.tempo, 50, 200, settings.tempo));
+  settings.midi = readBoolean(data.midi, settings.midi);
+  if (typeof data.midiOutput === "string" && data.midiOutput.length < 256) settings.midiOutput = data.midiOutput;
+  settings.midiMute = readBoolean(data.midiMute, settings.midiMute);
   settings.root = Math.round(clampNumber(data.root, 0, 11, settings.root));
   for (const key of EFFECT_KEYS) {
     settings[key] = clampNumber(data[key], RANGES[key].min, RANGES[key].max, settings[key]);
