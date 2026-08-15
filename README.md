@@ -35,8 +35,8 @@ you feel with your wrist.
   picks the key where the song needs the fewest tricks, shows the gesture for
   every chord, lights up green when you nail one, and follows you as you play.
 - **11 scales** — from a guided five-note scale where nothing can clash,
-  through the church modes, hirajoshi and hijaz, to the solfeggio frequencies
-  (396–963 Hz) for sound-bath work. Tuning at 440 or 432 Hz.
+  through the church modes, hirajoshi and hijaz, to the nine solfeggio
+  frequencies (174–963 Hz) for sound-bath work. Tuning at 440 or 432 Hz.
 - **11 synthesized sounds** in four families — pads and voices, keys and
   plucks, bells and glass, bass and drones. In duet mode each hand can be a
   different instrument.

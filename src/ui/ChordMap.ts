@@ -69,7 +69,9 @@ export class ChordMap {
 
   /** Lights up the chip being played. Zero means nothing is sounding. */
   setActive(degree: number) {
-    this.activeDegree = degree;
-    this.chips.forEach((chip, i) => chip.classList.toggle("on", i === degree - 1));
+    // On a seven-note scale, thumb + 3 still sounds the last degree — the
+    // highlight follows the same clamping the chord builder applies.
+    this.activeDegree = degree > 0 ? Math.min(degree, this.chips.length) : 0;
+    this.chips.forEach((chip, i) => chip.classList.toggle("on", i === this.activeDegree - 1));
   }
 }

@@ -244,13 +244,26 @@ function buildToneChord({ scale, degree, quality, octave }: BuildChordInput): Ch
   const index = Math.min(Math.max(degree, 1), tones.frequencies.length) - 1;
   const fundamental = tones.frequencies[index] * Math.pow(2, octave);
 
-  const multipliers: Record<ChordQuality, number[]> = {
-    natural: [1, 2],
-    min: [0.5, 1],
-    maj: [1, 2, 3],
-    dom7: [1, 1.5, 2],
-    min7: [0.5, 1, 2],
-  };
+  // Below ~600 Hz a tone thickens upward, with octaves and fifths above it.
+  // Above that, the added octave turns piercing — the ear is most sensitive
+  // right where 963×2 lands — so bright tones thicken downward instead. The
+  // named frequency itself is present either way; only its company moves.
+  const bright = fundamental >= 600;
+  const multipliers: Record<ChordQuality, number[]> = bright
+    ? {
+        natural: [1, 0.5],
+        min: [0.5, 1],
+        maj: [1, 0.5, 0.25],
+        dom7: [1, 0.75, 0.5],
+        min7: [0.5, 1, 0.25],
+      }
+    : {
+        natural: [1, 2],
+        min: [0.5, 1],
+        maj: [1, 2, 3],
+        dom7: [1, 1.5, 2],
+        min7: [0.5, 1, 2],
+      };
 
   return {
     frequencies: multipliers[quality].map((multiplier) => fundamental * multiplier),

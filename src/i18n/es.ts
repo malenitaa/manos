@@ -55,7 +55,7 @@ export const esDictionary: Dictionary = {
   "mode.hijaz.hint": "El maqam detrás de mucha música árabe y andaluza. El salto grande es todo el sabor.",
   "mode.solfeggio": "Solfeggio",
   "mode.solfeggio.hint":
-    "Siete frecuencias fijas, de 396 a 963 Hz, usadas en baños de sonido y meditación. No es una tonalidad: inclinar la mano engrosa el tono con octavas y quintas en vez de cambiar de acorde.",
+    "Las nueve frecuencias solfeggio, de 174 a 963 Hz, usadas en baños de sonido y meditación. No es una tonalidad: inclinar la mano engrosa el tono con octavas y quintas en vez de cambiar de acorde. Las combinaciones con pulgar llegan a los tonos de arriba.",
   "mode.free": "Libre",
   "mode.free.hint":
     "Sin escala y sin escalones: movés la mano de lado a lado y la altura la sigue. Los dedos suman notas encima.",

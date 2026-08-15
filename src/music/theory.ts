@@ -107,16 +107,18 @@ export const SCALES: Record<ScaleId, Scale> = {
   hijaz: { kind: "steps", id: "hijaz", group: "world", steps: [0, 1, 4, 5, 7, 8, 10] },
 
   /**
-   * The solfeggio frequencies. These are absolute pitches in hertz, associated
-   * with meditation and sound-bath practice, and they do not line up with equal
-   * temperament — which is exactly why they need their own kind of scale.
+   * The solfeggio frequencies — the full nine, from 174 to 963 Hz. These are
+   * absolute pitches in hertz, associated with meditation and sound-bath
+   * practice, and they do not line up with equal temperament — which is
+   * exactly why they need their own kind of scale. Only the middle six carry
+   * traditional syllable names; the outer ones are known by their number.
    */
   solfeggio: {
     kind: "tones",
     id: "solfeggio",
     group: "tones",
-    frequencies: [396, 417, 528, 639, 741, 852, 963],
-    labels: ["UT", "RE", "MI", "FA", "SOL", "LA", "SI"],
+    frequencies: [174, 285, 396, 417, 528, 639, 741, 852, 963],
+    labels: ["174", "285", "UT", "RE", "MI", "FA", "SOL", "LA", "963"],
   },
 };
 

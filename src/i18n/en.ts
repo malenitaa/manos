@@ -57,7 +57,7 @@ export const enDictionary = {
   "mode.hijaz.hint": "The maqam behind much Arabic and Andalusian music. The wide step is the whole flavour.",
   "mode.solfeggio": "Solfeggio",
   "mode.solfeggio.hint":
-    "Seven fixed frequencies from 396 to 963 Hz, used in sound baths and meditation. Not a key: leaning the hand thickens the tone with octaves and fifths instead of changing chord.",
+    "The nine solfeggio frequencies, 174 to 963 Hz, used in sound baths and meditation. Not a key: leaning the hand thickens the tone with octaves and fifths instead of changing chord. The thumb combinations reach the top tones.",
   "mode.free": "Free",
   "mode.free.hint":
     "No scale and no steps: move sideways and the pitch follows. Fingers stack extra notes on top.",

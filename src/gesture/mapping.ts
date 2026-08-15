@@ -60,14 +60,16 @@ export interface ExpressionIntent {
 }
 
 /**
- * Which degree the hand is asking for, from 0 to 7.
+ * Which degree the hand is asking for, from 0 to 9.
  *
  * You count I to IV on the four long fingers, the way anyone counts to four.
- * The thumb adds five: thumb alone is V, thumb and one finger is VI, thumb and
- * two is VII. One hand covers all seven degrees, and a closed fist is silence.
+ * The thumb adds five: thumb alone is V, thumb and one finger is VI, and so on
+ * to thumb and four. Seven-note scales stop at VII (anything higher lands on
+ * the last degree); the nine solfeggio tones use the whole range. A closed
+ * fist is silence.
  */
 export function degreeFromHand(hand: HandReading): number {
-  if (hand.thumb) return clamp(5 + hand.longFingerCount, 5, 7);
+  if (hand.thumb) return clamp(5 + hand.longFingerCount, 5, 9);
   return hand.longFingerCount;
 }
 
