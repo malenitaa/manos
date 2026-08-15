@@ -69,3 +69,7 @@ machine. Recording is assembled locally and saved straight to your disk.
 ## Feedback
 
 The 🐛 button in the app opens a pre-filled bug report — or open an issue here.
+
+## License
+
+MIT.
