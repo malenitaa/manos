@@ -76,6 +76,13 @@ machine. Recording is assembled locally and saved straight to your disk.
 
 The 🐛 button in the app opens a pre-filled bug report — or open an issue here.
 
+## Enjoyed it?
+
+If this was useful and you'd like to support the project:
+
+- [Cafecito](https://cafecito.app/rezamalena)
+- [Ko-fi](https://ko-fi.com/malenitaa)
+
 ## License
 
-MIT.
+[MIT](LICENSE)
