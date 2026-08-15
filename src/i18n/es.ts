@@ -39,8 +39,14 @@ export const esDictionary: Dictionary = {
   "mode.major.hint": "Los siete grados de una tonalidad mayor, con sus números romanos.",
   "mode.minor": "Menor",
   "mode.minor.hint": "Los siete grados de una tonalidad menor. Más oscura, más melancólica.",
+  "mode.harmonicMinor": "Menor armónica",
+  "mode.harmonicMinor.hint":
+    "Menor con la séptima subida: el menor dramático. Su acorde V es mayor y empuja fuerte de vuelta a casa.",
   "mode.pentatonicMinor": "Pentatónica menor",
   "mode.pentatonicMinor.hint": "Cinco notas, las del blues y el rock. Tampoco se puede errar.",
+  "mode.blues": "Blues",
+  "mode.blues.hint":
+    "La pentatónica menor más la nota blue. Sus acordes propios salen abiertos; inclinada a la derecha da las séptimas dominantes sobre las que corre el blues de verdad.",
   "mode.dorian": "Dórico",
   "mode.dorian.hint": "Menor con una nota levantada. Triste pero no derrotado: el menor del folk y del jazz.",
   "mode.phrygian": "Frigio",
@@ -124,6 +130,15 @@ export const esDictionary: Dictionary = {
   "voicing.hint": "Notas sueltas: cada gesto es una nota de la escala, para melodías. Más lento que un instrumento con teclas — sirve para líneas tranquilas, no para pasajes rápidos.",
 
   "map.show": "Mostrar el mapa de acordes",
+
+  "panel.midi": "MIDI",
+  "midi.enable": "Mandar MIDI a tus instrumentos",
+  "midi.hint":
+    "Tus gestos tocan tus propios sintes — GarageBand, Ableton, hardware. En Mac, prendé el IAC Driver en Configuración MIDI Audio, elegilo abajo y agregá una pista de instrumento de software en tu DAW. El volumen viaja por CC7 y el brillo por CC74. La batería queda interna.",
+  "midi.output": "Salida",
+  "midi.mute": "Silenciar el sonido propio",
+  "midi.unsupported": "Este navegador no puede mandar MIDI — Chrome y Edge sí.",
+  "midi.none": "No encontré salidas MIDI. Abrí tu DAW o prendé el IAC Driver, y apagá y prendé esto de nuevo.",
 
   "panel.rhythm": "Ritmo",
   "rhythm.enable": "Batería — la otra mano la dirige",

@@ -34,9 +34,10 @@ you feel with your wrist.
 - **Play any song.** Paste a chord chart — chords alone or over lyrics. It
   picks the key where the song needs the fewest tricks, shows the gesture for
   every chord, lights up green when you nail one, and follows you as you play.
-- **11 scales** — from a guided five-note scale where nothing can clash,
-  through the church modes, hirajoshi and hijaz, to the nine solfeggio
-  frequencies (174–963 Hz) for sound-bath work. Tuning at 440 or 432 Hz.
+- **13 scales** — from a guided five-note scale where nothing can clash,
+  through harmonic minor, blues and the church modes, hirajoshi and hijaz, to
+  the nine solfeggio frequencies (174–963 Hz) for sound-bath work. Tuning at
+  440 or 432 Hz.
 - **11 synthesized sounds** in four families — pads and voices, keys and
   plucks, bells and glass, bass and drones. In duet mode each hand can be a
   different instrument.
@@ -44,6 +45,9 @@ you feel with your wrist.
   it — fingers for density, height for volume, a fist mutes it right on the bar.
 - **Record straight to WAV** — 24-bit stereo, limited so it cannot clip, ready
   to drop into any DAW.
+- **MIDI out** (Chrome/Edge) — the gestures play *your* synths: GarageBand,
+  Ableton, hardware. Volume rides CC7, brightness CC74. On a Mac, enable the
+  IAC Driver in Audio MIDI Setup and pick it as the output.
 - **Melody mode**, a live chord map, reverb / delay / chorus / drive, and an
   adjustable response feel. English and Spanish.
 

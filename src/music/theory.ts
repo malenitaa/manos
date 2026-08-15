@@ -31,7 +31,9 @@ export type ScaleId =
   | "guided"
   | "major"
   | "minor"
+  | "harmonicMinor"
   | "pentatonicMinor"
+  | "blues"
   | "dorian"
   | "phrygian"
   | "lydian"
@@ -86,6 +88,8 @@ export const SCALES: Record<ScaleId, Scale> = {
   },
   major: { kind: "steps", id: "major", group: "simple", steps: [0, 2, 4, 5, 7, 9, 11] },
   minor: { kind: "steps", id: "minor", group: "simple", steps: [0, 2, 3, 5, 7, 8, 10] },
+  /** Minor with the seventh raised: the dramatic minor, with a major V that pulls home. */
+  harmonicMinor: { kind: "steps", id: "harmonicMinor", group: "simple", steps: [0, 2, 3, 5, 7, 8, 11] },
   /** The blues-and-rock five notes. Nothing in it clashes either. */
   pentatonicMinor: {
     kind: "steps",
@@ -94,6 +98,12 @@ export const SCALES: Record<ScaleId, Scale> = {
     steps: [0, 3, 5, 7, 10],
     borrowedFrom: [0, 2, 3, 5, 7, 8, 10],
   },
+  /**
+   * The minor pentatonic plus the blue note. Its own stacked chords come out
+   * open and sus-flavoured — true to the scale — and leaning right forces the
+   * dominant sevenths blues actually runs on.
+   */
+  blues: { kind: "steps", id: "blues", group: "simple", steps: [0, 3, 5, 6, 7, 10] },
 
   /** The old church modes: a major scale started from a different note. */
   dorian: { kind: "steps", id: "dorian", group: "modes", steps: [0, 2, 3, 5, 7, 9, 10] },

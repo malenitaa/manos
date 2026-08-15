@@ -41,8 +41,14 @@ export const enDictionary = {
   "mode.major.hint": "All seven degrees of a major key, with their roman numerals.",
   "mode.minor": "Minor",
   "mode.minor.hint": "All seven degrees of a minor key. Darker, more wistful.",
+  "mode.harmonicMinor": "Harmonic minor",
+  "mode.harmonicMinor.hint":
+    "Minor with the seventh raised: the dramatic minor. Its V chord is major and pulls home hard.",
   "mode.pentatonicMinor": "Minor pentatonic",
   "mode.pentatonicMinor.hint": "Five notes, the blues and rock ones. Also impossible to get wrong.",
+  "mode.blues": "Blues",
+  "mode.blues.hint":
+    "The minor pentatonic plus the blue note. Its own chords come out open; lean right for the dominant sevenths blues really runs on.",
   "mode.dorian": "Dorian",
   "mode.dorian.hint": "Minor with one note lifted. Sad but not defeated — the folk and jazz minor.",
   "mode.phrygian": "Phrygian",
@@ -126,6 +132,15 @@ export const enDictionary = {
   "voicing.hint": "Single notes: each gesture is one note of the scale, for melodies. Slower than an instrument with keys — good for calm lines, not fast runs.",
 
   "map.show": "Show the chord map",
+
+  "panel.midi": "MIDI",
+  "midi.enable": "Send MIDI to your instruments",
+  "midi.hint":
+    "Your gestures play your own synths — GarageBand, Ableton, hardware. On a Mac, turn on the IAC Driver in Audio MIDI Setup, pick it below, and add a software-instrument track in your DAW. Volume rides CC7 and brightness CC74. Drums stay internal.",
+  "midi.output": "Output",
+  "midi.mute": "Mute the built-in sound",
+  "midi.unsupported": "This browser cannot send MIDI — Chrome and Edge can.",
+  "midi.none": "No MIDI outputs found. Open your DAW or enable the IAC Driver, then toggle this off and on.",
 
   "panel.rhythm": "Rhythm",
   "rhythm.enable": "Drums — the other hand conducts them",

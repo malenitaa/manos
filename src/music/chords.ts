@@ -216,16 +216,19 @@ function buildStepChord({
   frequencies.push(midiToFrequency(base - 12, tuning));
 
   const flavour = FLAVOUR[shape];
-  const dark = flavour === "min" || flavour === "dim";
   // A lowered chord is spelled with flats, the way it appears on a chart.
   const preferFlat = shift < 0;
   const accidental = shift < 0 ? "♭" : shift > 0 ? "♯" : "";
+
+  // The numeral keeps the triad's own marking (vii°, III+); sus chords are
+  // written uppercase with their suffix carrying the story.
+  const numeralQuality = flavour === "sus" ? "maj" : flavour;
 
   return {
     frequencies,
     name: letterName(chordRoot, preferFlat) + SUFFIX[shape],
     solfege: solfegeName(chordRoot, preferFlat) + (SUFFIX[shape] ? ` ${SUFFIX[shape]}` : ""),
-    numeral: accidental + numeralFor(sourceIndex, dark ? "min" : flavour === "sus" ? "maj" : flavour) + (NUMERAL_SUFFIX[shape] ?? ""),
+    numeral: accidental + numeralFor(sourceIndex, numeralQuality) + (NUMERAL_SUFFIX[shape] ?? ""),
     shape,
     rootPc: pitchClass(chordRoot),
     flavour,

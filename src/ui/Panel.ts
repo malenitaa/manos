@@ -14,7 +14,7 @@ import { clear, element } from "./dom";
 
 /** The order scales appear in, and which heading they sit under. */
 const SCALE_GROUPS: { group: ScaleGroup | "free"; label: TranslationKey; modes: ModeId[] }[] = [
-  { group: "simple", label: "group.simple", modes: ["guided", "major", "minor", "pentatonicMinor"] },
+  { group: "simple", label: "group.simple", modes: ["guided", "major", "minor", "harmonicMinor", "pentatonicMinor", "blues"] },
   { group: "modes", label: "group.modes", modes: ["dorian", "phrygian", "lydian", "mixolydian"] },
   { group: "world", label: "group.world", modes: ["hirajoshi", "hijaz"] },
   { group: "tones", label: "group.tones", modes: ["solfeggio"] },
@@ -49,6 +49,9 @@ export class Panel {
     private toggleButton: HTMLButtonElement,
     private settings: Settings,
     private onChange: PanelListener,
+    /** The MIDI outputs currently known. Empty until MIDI is switched on. */
+    private midiDevices: () => { id: string; name: string }[] = () => [],
+    private midiSupported: () => boolean = () => false,
   ) {
     this.toggleButton.addEventListener("click", () => this.root.classList.toggle("hidden"));
   }
@@ -64,6 +67,7 @@ export class Panel {
       this.tuningSection(t),
       this.timbreSection(t),
       this.rhythmSection(t),
+      this.midiSection(t),
       this.effectsSection(t),
       this.responseSection(t),
       this.handsSection(t),
@@ -300,6 +304,61 @@ export class Panel {
       element("label", { className: "knob" }, [tempoLabel, tempo]),
       element("p", { className: "hint", text: t("rhythm.hint") }),
     ]);
+  }
+
+  /** MIDI out: a toggle, the output picker, and the mute for the built-in sound. */
+  private midiSection(t: Translate): HTMLElement {
+    const supported = this.midiSupported();
+
+    const toggle = element("input", { attrs: { type: "checkbox" } });
+    toggle.checked = this.settings.midi;
+    toggle.disabled = !supported;
+    toggle.addEventListener("change", () => {
+      this.settings.midi = toggle.checked;
+      this.change("midi");
+    });
+
+    const children: (Node | string)[] = [
+      element("label", { className: "check" }, [toggle, element("span", { text: t("midi.enable") })]),
+    ];
+
+    if (!supported) {
+      children.push(element("p", { className: "hint", text: t("midi.unsupported") }));
+      return this.section(t("panel.midi"), children);
+    }
+
+    if (this.settings.midi) {
+      const devices = this.midiDevices();
+      if (devices.length === 0) {
+        children.push(element("p", { className: "hint", text: t("midi.none") }));
+      } else {
+        const select = element("select", { attrs: { "aria-label": t("midi.output") } });
+        for (const device of devices) {
+          const option = element("option", { text: device.name });
+          option.value = device.id;
+          select.append(option);
+        }
+        if (devices.some((device) => device.id === this.settings.midiOutput)) {
+          select.value = this.settings.midiOutput;
+        }
+        select.addEventListener("change", () => {
+          this.settings.midiOutput = select.value;
+          this.change("midiOutput");
+        });
+        children.push(select);
+
+        const mute = element("input", { attrs: { type: "checkbox" } });
+        mute.checked = this.settings.midiMute;
+        mute.addEventListener("change", () => {
+          this.settings.midiMute = mute.checked;
+          this.change("midiMute");
+        });
+        children.push(element("label", { className: "check" }, [mute, element("span", { text: t("midi.mute") })]));
+      }
+    }
+
+    children.push(element("p", { className: "hint", text: t("midi.hint") }));
+    return this.section(t("panel.midi"), children);
   }
 
   private effectsSection(t: Translate): HTMLElement {
