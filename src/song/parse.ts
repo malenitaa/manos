@@ -2,9 +2,17 @@
  * Reading a pasted chord chart.
  *
  * The input is whatever the player copied: chords alone, chords over lyrics,
- * section headers. Anything that parses as a chord symbol is kept in order;
- * lines that are mostly words are treated as lyrics and skipped whole, so a
- * lyric that happens to start with "A" does not become a chord.
+ * section headers, and whatever junk the website wrapped around them. Real
+ * charts taught this parser three things the hard way:
+ *
+ *   - Lyrics can look like chords. "Do you?" contains a perfectly plausible
+ *     chord token, and Leonard Cohen is not going to stop asking. So a line
+ *     only counts as a chord line when it contains at least one real chord
+ *     and NO ordinary words — genuine chord lines never have any.
+ *   - Sites wrap chords in punctuation ("&gt;C rendered as ">C). Tokens are
+ *     stripped of wrapping junk before parsing, so those chords survive.
+ *   - Chord lines carry annotations — x2, (bis), N.C., bar lines — that must
+ *     not disqualify them.
  */
 
 import type { ShapeId } from "../music/chords";
@@ -21,6 +29,10 @@ interface QualityRule {
  * Every suffix the parser understands, mapped to the closest playable shape.
  * Exact matches first; below them, the chords that get simplified — a 13th
  * played as a plain dominant still functions as one.
+ *
+ * Deliberately absent: "o" as diminished ("Co"). It is real but rare notation,
+ * and it makes the English word "Do" parse as D diminished — a lyric, not a
+ * chord. "dim", "°" and "º" all still work.
  */
 const QUALITIES: Record<string, QualityRule> = {
   "": { shape: "maj" },
@@ -45,7 +57,7 @@ const QUALITIES: Record<string, QualityRule> = {
   sus: { shape: "sus4" },
   dim: { shape: "dim" },
   "°": { shape: "dim" },
-  o: { shape: "dim" },
+  "º": { shape: "dim" },
 
   maj9: { shape: "maj7", approximated: true },
   add9: { shape: "maj", approximated: true },
@@ -68,7 +80,7 @@ const QUALITIES: Record<string, QualityRule> = {
 };
 
 export interface SongChord {
-  /** As the player wrote it: "Bbmaj7", "E7/G#". */
+  /** As the player wrote it, junk stripped: "Bbmaj7", "E7/G#". */
   token: string;
   /** Pitch class of the root, 0 to 11. */
   pc: number;
@@ -89,8 +101,14 @@ export interface ParsedSong {
 
 const CHORD_PATTERN = /^([A-G])([#♯b♭]?)([^/]*)(?:\/([A-G][#♯b♭]?))?$/;
 
+/** Wrapping junk that websites and typists put around chords. */
+const JUNK = /["'“”‘’<>«»¿?¡!;:.,()[\]]/g;
+
+/** Things that legitimately sit on a chord line without being chords. */
+const ANNOTATION = /^(x\d+|\d+x|bis|n\.?c\.?|%|\|+|[-–—=_~]+|\d+)$/i;
+
 export function parseChordToken(token: string): SongChord | null {
-  const cleaned = token.replace(/[(),.]/g, "").trim();
+  const cleaned = token.replace(JUNK, "").trim();
   const match = CHORD_PATTERN.exec(cleaned);
   if (!match) return null;
 
@@ -111,6 +129,26 @@ export function parseChordToken(token: string): SongChord | null {
   };
 }
 
+type TokenKind = "chord" | "annotation" | "chordish" | "word";
+
+function classify(raw: string): { kind: TokenKind; chord?: SongChord; cleaned: string } {
+  const cleaned = raw.replace(JUNK, "").trim();
+  if (!cleaned) return { kind: "annotation", cleaned };
+
+  const chord = parseChordToken(cleaned);
+  if (chord) return { kind: "chord", chord, cleaned };
+
+  // A parenthesised aside on a chord line — "(bis)", "(or", "softly)".
+  if (raw.startsWith("(") || raw.endsWith(")")) return { kind: "annotation", cleaned };
+  if (ANNOTATION.test(cleaned)) return { kind: "annotation", cleaned };
+
+  // Starts like a chord but does not parse: probably an exotic chord worth
+  // reporting — as long as the rest of the line says this is a chord line.
+  if (/^[A-G][#♯b♭]?/.test(cleaned)) return { kind: "chordish", cleaned };
+
+  return { kind: "word", cleaned };
+}
+
 export function parseSong(text: string): ParsedSong {
   const sequence: SongChord[] = [];
   const skipped: string[] = [];
@@ -120,17 +158,17 @@ export function parseSong(text: string): ParsedSong {
     const stripped = line.replace(/\[[^\]]*\]/g, " ").trim();
     if (!stripped) continue;
 
-    const tokens = stripped.split(/[\s|]+/).filter(Boolean);
-    const parsed = tokens.map((token) => ({ token, chord: parseChordToken(token) }));
-    const hits = parsed.filter((entry) => entry.chord).length;
+    const tokens = stripped.split(/[\s|]+/).filter(Boolean).map(classify);
 
-    // A line that is mostly words is lyrics; skip it whole so stray one-letter
-    // words do not turn into chords.
-    if (hits === 0 || hits < tokens.length / 2) continue;
+    // A chord line has at least one real chord and no ordinary words. One
+    // word is enough to make it lyrics: real chord lines never contain any.
+    const chords = tokens.filter((token) => token.kind === "chord");
+    const hasWords = tokens.some((token) => token.kind === "word");
+    if (chords.length === 0 || hasWords) continue;
 
-    for (const entry of parsed) {
-      if (entry.chord) sequence.push(entry.chord);
-      else skipped.push(entry.token);
+    for (const token of tokens) {
+      if (token.kind === "chord" && token.chord) sequence.push(token.chord);
+      else if (token.kind === "chordish") skipped.push(token.cleaned);
     }
   }
 
