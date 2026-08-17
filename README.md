@@ -8,6 +8,8 @@ nothing you do ever leaves your machine.
 Made for anyone from *never touched an instrument* to *professional who wants
 to feel harmony in their body*.
 
+![The gesture language: one hand builds the chord, the other shapes the sound](docs/gestures.svg)
+
 ## How it plays
 
 It does not imitate a guitar or a piano — a D chord is a different shape on
