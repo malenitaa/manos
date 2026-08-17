@@ -5,6 +5,9 @@ browser makes the sound, and a waveform draws whatever you are hearing. No
 install, no account, no audio files — everything is synthesized live, and
 nothing you do ever leaves your machine.
 
+**Play it now → [manos-instrument.vercel.app](https://manos-instrument.vercel.app)**
+— open it in Chrome or Edge and allow the camera.
+
 Made for anyone from *never touched an instrument* to *professional who wants
 to feel harmony in their body*.
 
@@ -57,16 +60,20 @@ you feel with your wrist.
 
 ## Try it
 
+The quick way: **[manos-instrument.vercel.app](https://manos-instrument.vercel.app)**.
+The first visit downloads the hand-tracking model (~8 MB, cached afterwards).
+Chrome or Edge recommended.
+
+To run it locally instead:
+
 ```bash
 npm install
 npm run dev
 ```
 
-Open http://localhost:3004 and allow camera access. The first run downloads the
-hand-tracking model (~8 MB, cached afterwards). Chrome or Edge recommended;
-camera access requires HTTPS or localhost.
-
-`npm run build` produces a static `dist/` that deploys to any static host.
+Open http://localhost:3004 and allow camera access — the camera needs HTTPS or
+localhost. `npm run build` produces a static `dist/` that deploys to any
+static host.
 
 ## Privacy
 
@@ -76,7 +83,8 @@ machine. Recording is assembled locally and saved straight to your disk.
 
 ## Feedback
 
-The 🐛 button in the app opens a pre-filled bug report — or open an issue here.
+The 🐛 button in the app opens a GitHub issue with the technical details
+already filled in — or just [open one here](https://github.com/malenitaa/manos/issues).
 
 ## Enjoyed it?
 
