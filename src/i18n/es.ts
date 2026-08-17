@@ -11,6 +11,8 @@ export const esDictionary: Dictionary = {
   "app.waiting": "esperando",
   "app.error.camera": "Hace falta permiso de cámara para poder verte las manos.",
   "app.error.generic": "No arrancó: {message}",
+  "app.hint.safari": "Un aviso: Safari puede trabarse con la cámara y el sonido. En Chrome o Edge anda mucho más fluido.",
+  "app.hint.mobile": "Este instrumento quiere una compu: la cámara del teléfono encuadra muy apretadas las dos manos. Pero mirá con confianza.",
 
   "panel.toggle": "controles",
   "panel.scale": "Escala",

@@ -800,6 +800,11 @@ input[type="range"]::-moz-range-thumb {
   color: var(--danger);
 }
 
+/* The gentle where-this-runs-best note: warm, never alarming. */
+#start .notice {
+  color: hsl(40 70% 68%);
+}
+
 #start-button {
   margin: 14px 0 18px;
   padding: 12px 34px;

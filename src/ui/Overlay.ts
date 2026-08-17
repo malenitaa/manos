@@ -5,6 +5,7 @@
 
 import { renderEmphasis, type Translate, type TranslationKey } from "../i18n";
 import { clear, element, requireElement } from "./dom";
+import { environmentHint } from "./environment";
 
 /** What a take can be: sound or video, with or without the microphone. */
 export interface TakeKind {
@@ -120,9 +121,15 @@ export class Overlay {
       element("h2", { text: "manos" }),
       element("p", { text: t("app.tagline") }),
       element("p", { className: "fine", text: t("app.privacy") }),
-      button,
-      error,
     );
+
+    // A kind word where the instrument struggles — never a closed door.
+    const hint = environmentHint();
+    if (hint) {
+      this.startCard.append(element("p", { className: "fine notice", text: t(`app.hint.${hint}`) }));
+    }
+
+    this.startCard.append(button, error);
   }
 
   private renderLegend(t: Translate) {
