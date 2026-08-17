@@ -104,8 +104,11 @@ const CHORD_PATTERN = /^([A-G])([#♯b♭]?)([^/]*)(?:\/([A-G][#♯b♭]?))?$/;
 /** Wrapping junk that websites and typists put around chords. */
 const JUNK = /["'“”‘’<>«»¿?¡!;:.,()[\]]/g;
 
-/** Things that legitimately sit on a chord line without being chords. */
-const ANNOTATION = /^(x\d+|\d+x|bis|n\.?c\.?|%|\|+|[-–—=_~]+|\d+)$/i;
+/** Things that legitimately sit on a chord line without being chords.
+ *  Standalone slashes are beat and walk marks — "G / / /" holds the chord,
+ *  "D \ C" separates two — and must not read as words, or the whole line
+ *  gets mistaken for lyrics and a verse disappears. */
+const ANNOTATION = /^(x\d+|\d+x|bis|n\.?c\.?|%|\|+|[-–—=_~]+|[\\/]+|\d+)$/i;
 
 export function parseChordToken(token: string): SongChord | null {
   const cleaned = token.replace(JUNK, "").trim();
