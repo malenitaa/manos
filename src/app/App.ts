@@ -116,7 +116,8 @@ export class App {
     });
     this.overlay.whenTakeChosen((kind) => void this.startTake(kind));
     this.overlay.whenFeedback(() => {
-      window.location.href = buildFeedbackLink(this.t, { settings: this.settings, fps: this.tracker.fps });
+      // A new tab: the issue form must not tear the player away from the take.
+      window.open(buildFeedbackLink(this.t, { settings: this.settings, fps: this.tracker.fps }), "_blank", "noopener");
     });
     this.overlay.setRecordAvailable(false);
     window.addEventListener("resize", () => this.visuals.resize());
