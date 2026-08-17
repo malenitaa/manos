@@ -46,8 +46,10 @@ export interface GesturePlan {
 export interface PlannedChord extends SongChord {
   /** Null only for a diminished chord whose root is not in the key. */
   plan: GesturePlan | null;
-  /** How many times in a row the chart wrote this same chord. */
+  /** How many chart chords in a row this card absorbed. */
   times: number;
+  /** Those chords as written, in order — repeats and slash spellings included. */
+  merged: SongChord[];
 }
 
 export interface SongPlan {
@@ -120,17 +122,20 @@ export function chordMatches(targetPc: number, targetShape: string, playedPc: nu
 export function planInKey(sequence: SongChord[], root: number, scaleId: ScaleId): SongPlan {
   const scale = SCALES[scaleId] as StepScale;
 
-  // Consecutive repeats collapse into one card. On paper "Cm Cm" means the
-  // chord lasts two bars, but here duration belongs to the hand — the strip
-  // only ever needs to ask for *changes* of chord.
+  // Consecutive chords that sound identical here collapse into one card: plain
+  // repeats ("Cm Cm"), but also spellings this instrument cannot tell apart —
+  // "G G/A G/B" is three names for the same played chord, since slash basses do
+  // not sound. Duration belongs to the hand, so the strip only ever needs to
+  // ask for changes *it can hear*. The names all stay on the card.
   const planned: PlannedChord[] = [];
   for (const chord of sequence) {
     const previous = planned[planned.length - 1];
-    if (previous && previous.token === chord.token) {
+    if (previous && previous.pc === chord.pc && previous.shape === chord.shape) {
       previous.times += 1;
+      previous.merged.push(chord);
       continue;
     }
-    planned.push({ ...chord, plan: planChord(scale, root, chord), times: 1 });
+    planned.push({ ...chord, plan: planChord(scale, root, chord), times: 1, merged: [chord] });
   }
 
   return {

@@ -225,20 +225,25 @@ export class SongPanel {
     const list = element("ul", { className: "gesture-list" });
     const seen = new Set<string>();
     for (const chord of plan.sequence) {
-      if (seen.has(chord.token)) continue;
-      seen.add(chord.token);
+      // Spellings folded into one card still get their own line here, so a
+      // musician can see what each written chord gives up (a silent bass, an
+      // approximated colour) even though the gesture is shared.
+      for (const member of chord.merged) {
+        if (seen.has(member.token)) continue;
+        seen.add(member.token);
 
-      const notes: string[] = [];
-      if (chord.approximatedFrom) {
-        notes.push(t("song.approx", { written: chord.approximatedFrom, played: chord.token.replace(/\/.*$/, "") }));
+        const notes: string[] = [];
+        if (member.approximatedFrom) {
+          notes.push(t("song.approx", { written: member.approximatedFrom, played: member.token.replace(/\/.*$/, "") }));
+        }
+        if (member.bass) notes.push(t("song.bass", { bass: member.bass }));
+        const gesture = chord.plan ? this.gestureText(chord.plan) : t("song.unplayable");
+        const detail = notes.length > 0 ? `${gesture} — ${notes.join("; ")}` : gesture;
+
+        const item = element("li", {}, [element("b", { text: member.token }), element("span", { text: detail })]);
+        if (!chord.plan) item.classList.add("bad");
+        list.append(item);
       }
-      if (chord.bass) notes.push(t("song.bass", { bass: chord.bass }));
-      const gesture = chord.plan ? this.gestureText(chord.plan) : t("song.unplayable");
-      const detail = notes.length > 0 ? `${gesture} — ${notes.join("; ")}` : gesture;
-
-      const item = element("li", {}, [element("b", { text: chord.token }), element("span", { text: detail })]);
-      if (!chord.plan) item.classList.add("bad");
-      list.append(item);
     }
     out.push(list);
     return out;
@@ -275,13 +280,20 @@ export class SongPanel {
     if (!this.plan) return;
 
     this.plan.sequence.forEach((chord, index) => {
-      const name = chord.times > 1 ? `${chord.token} ×${chord.times}` : chord.token;
+      // A card absorbed several spellings ("G G/A G/B") shows them all — the
+      // chart's truth stays visible even though the gesture is one.
+      const labels: string[] = [];
+      for (const member of chord.merged) {
+        if (labels[labels.length - 1] !== member.token) labels.push(member.token);
+      }
+      const name =
+        labels.length > 1 ? labels.join(" · ") : chord.times > 1 ? `${chord.token} ×${chord.times}` : chord.token;
       const card = element("button", { className: "songcard", attrs: { type: "button" } }, [
         element("span", { className: "n", text: name }),
         element("span", { className: "g", text: chord.plan ? this.gestureText(chord.plan) : (this.t?.("song.unplayable") ?? "") }),
       ]);
       if (!chord.plan) card.classList.add("bad");
-      else if (chord.approximatedFrom || chord.bass) card.classList.add("warn");
+      else if (chord.merged.some((member) => member.approximatedFrom || member.bass)) card.classList.add("warn");
       card.addEventListener("click", () => this.moveTo(index));
       this.strip.append(card);
     });
