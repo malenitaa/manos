@@ -27,7 +27,7 @@ import { SongPanel } from "../ui/SongPanel";
 import { requireElement } from "../ui/dom";
 import { HandTracker } from "../vision/HandTracker";
 import { remap } from "../vision/landmarks";
-import type { HandReading } from "../vision/types";
+import type { HandReading, Side } from "../vision/types";
 import { buildFeedbackLink } from "./feedback";
 import { loadSettings, responseFor, saveSettings, type SettingKey, type Settings } from "./settings";
 
@@ -70,6 +70,9 @@ export class App {
   /** Which colour family the expression hand is holding, steadied over frames. */
   private familySteady = new Steady<Family>("classic", 4);
   private family: Family = "classic";
+  /** Which physical hand (smoother slot) holds the chord role right now. */
+  private chordSlot: number | null = null;
+  private lastWanted: Side = "right";
 
   private volume = 0;
   private brightness = 0.6;
@@ -461,12 +464,33 @@ export class App {
   /**
    * Who does what. With one hand on screen, it plays. With two, one holds the
    * chord and the other shapes it — unless duet mode is on, where both play.
+   *
+   * Roles are sticky: once a hand is the chord hand it stays the chord hand
+   * for as long as it is on screen, tracked by its physical identity rather
+   * than the model's left/right label — that label flickers exactly when a
+   * hand turns, and a flicker must never swap the instrument mid-phrase.
+   * Only when the screen empties is the preference read fresh.
    */
   private assignRoles(hands: HandReading[]): { playing: HandReading[]; expression?: HandReading } {
-    if (this.settings.duo || hands.length <= 1) return { playing: hands };
+    const wanted: Side = this.settings.swap ? "left" : "right";
+    // Changing the swap setting is an explicit request to re-deal the roles.
+    if (wanted !== this.lastWanted) {
+      this.lastWanted = wanted;
+      this.chordSlot = null;
+    }
 
-    const wanted = this.settings.swap ? "left" : "right";
-    const chordHand = hands.find((hand) => hand.side === wanted) ?? hands[hands.length - 1];
+    if (this.settings.duo || hands.length === 0) {
+      this.chordSlot = null;
+      return { playing: hands };
+    }
+    if (hands.length === 1) {
+      this.chordSlot = hands[0].id;
+      return { playing: hands };
+    }
+
+    const remembered = this.chordSlot === null ? undefined : hands.find((hand) => hand.id === this.chordSlot);
+    const chordHand = remembered ?? hands.find((hand) => hand.side === wanted) ?? hands[hands.length - 1];
+    this.chordSlot = chordHand.id;
     return { playing: [chordHand], expression: hands.find((hand) => hand !== chordHand) };
   }
 

@@ -22,8 +22,52 @@ const MODEL_URL =
  * How long a hand keeps playing after the model loses it. Detection drops for a
  * frame or two all the time — a blink of bad light, a hand turning edge on. If
  * the sound cut out every time, the instrument would stutter constantly.
+ *
+ * The grace is per hand: losing one of two — the everyday case in a difficult
+ * two-hand transition — must not make the survivor swallow the other's role.
  */
 const GRACE_MS = 220;
+
+/** A hand must have lived this long to earn the grace — a one-frame phantom
+ *  (a face, a mug) should not get to linger. */
+const MIN_LIFE_MS = 150;
+
+interface GraceEntry {
+  reading: HandReading;
+  seenAt: number;
+  bornAt: number;
+}
+
+/**
+ * Fills in briefly-missing hands from memory. Exported bare so the behaviour
+ * can be exercised without a camera.
+ */
+export function withHandGrace(
+  present: HandReading[],
+  memory: Map<number, GraceEntry>,
+  nowMs: number,
+  capacity: number,
+): HandReading[] {
+  for (const reading of present) {
+    const previous = memory.get(reading.id);
+    // A slot idle long enough was reassigned to a new hand by the smoother
+    // pool, so its life starts over.
+    const bornAt = previous && nowMs - previous.seenAt <= 500 ? previous.bornAt : nowMs;
+    memory.set(reading.id, { reading, seenAt: nowMs, bornAt });
+  }
+
+  const out = [...present];
+  for (const [slot, entry] of memory) {
+    if (present.some((reading) => reading.id === slot)) continue;
+    if (nowMs - entry.seenAt >= GRACE_MS) {
+      memory.delete(slot);
+      continue;
+    }
+    if (entry.seenAt - entry.bornAt < MIN_LIFE_MS) continue;
+    if (out.length < capacity) out.push(entry.reading);
+  }
+  return out;
+}
 
 export interface TrackerOptions {
   maxHands?: number;
@@ -35,8 +79,8 @@ export class HandTracker {
   private landmarker: HandLandmarker | null = null;
   private lastVideoTime = -1;
   private smoothers = new HandSmootherPool(2);
-  private lastReadings: HandReading[] = [];
-  private lastSeenAt = 0;
+  private grace = new Map<number, GraceEntry>();
+  private lastOutput: HandReading[] = [];
   private frameTimes: number[] = [];
   /** Which fingers each tracked hand had up last frame, for the hysteresis. */
   private extensions = new Map<number, boolean[]>();
@@ -87,7 +131,7 @@ export class HandTracker {
 
     // Feeding the same frame twice makes the model throw.
     if (this.video.currentTime === this.lastVideoTime) {
-      return this.withGrace(nowMs);
+      return this.lastOutput;
     }
     this.lastVideoTime = this.video.currentTime;
 
@@ -127,19 +171,10 @@ export class HandTracker {
       readings.push(reading);
     }
 
-    if (readings.length > 0) {
-      this.lastReadings = readings;
-      this.lastSeenAt = nowMs;
-      return readings;
-    }
-    return this.withGrace(nowMs);
-  }
-
-  /** Holds the last good reading for a moment so a dropped frame is not a cut. */
-  private withGrace(nowMs: number): HandReading[] {
-    if (nowMs - this.lastSeenAt < GRACE_MS) return this.lastReadings;
-    this.lastReadings = [];
-    return [];
+    // A hand the model just lost — one of two, or all of them — lingers from
+    // memory for a moment, so a blink is never a cut and never a role change.
+    this.lastOutput = withHandGrace(readings, this.grace, nowMs, this.options.maxHands ?? 2);
+    return this.lastOutput;
   }
 
   private trackFps(nowMs: number) {
@@ -157,6 +192,7 @@ export class HandTracker {
     this.video.srcObject = null;
     this.landmarker?.close();
     this.landmarker = null;
-    this.lastReadings = [];
+    this.grace.clear();
+    this.lastOutput = [];
   }
 }
