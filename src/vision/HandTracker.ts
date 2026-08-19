@@ -28,6 +28,14 @@ const MODEL_URL =
  */
 const GRACE_MS = 220;
 
+/**
+ * Hands move at human speed: reading them ~30 times a second loses nothing
+ * playable, and halves the model's cost — the single biggest CPU line in the
+ * app. The camera itself keeps its native rate, so the picture on screen and
+ * in recorded takes stays exactly as smooth as before.
+ */
+const MIN_INFERENCE_INTERVAL_MS = 30;
+
 /** A hand must have lived this long to earn the grace — a one-frame phantom
  *  (a face, a mug) should not get to linger. */
 const MIN_LIFE_MS = 150;
@@ -78,6 +86,7 @@ export interface TrackerOptions {
 export class HandTracker {
   private landmarker: HandLandmarker | null = null;
   private lastVideoTime = -1;
+  private lastInferenceAt = 0;
   private smoothers = new HandSmootherPool(2);
   private grace = new Map<number, GraceEntry>();
   private lastOutput: HandReading[] = [];
@@ -133,7 +142,13 @@ export class HandTracker {
     if (this.video.currentTime === this.lastVideoTime) {
       return this.lastOutput;
     }
+    // Between inferences the last reading stands. The One Euro filters carry
+    // their own clocks, so a 30 Hz feed changes nothing about how they smooth.
+    if (nowMs - this.lastInferenceAt < MIN_INFERENCE_INTERVAL_MS) {
+      return this.lastOutput;
+    }
     this.lastVideoTime = this.video.currentTime;
+    this.lastInferenceAt = nowMs;
 
     const result = this.landmarker.detectForVideo(this.video, nowMs);
     this.trackFps(nowMs);
