@@ -32,9 +32,10 @@ const GRACE_MS = 220;
  * Hands move at human speed: reading them ~30 times a second loses nothing
  * playable, and halves the model's cost — the single biggest CPU line in the
  * app. The camera itself keeps its native rate, so the picture on screen and
- * in recorded takes stays exactly as smooth as before.
+ * in recorded takes stays exactly as smooth as before. The interval follows
+ * the Smoothness slider: its immediate third runs the model on every frame.
  */
-const MIN_INFERENCE_INTERVAL_MS = 30;
+const DEFAULT_INFERENCE_INTERVAL_MS = 30;
 
 /** A hand must have lived this long to earn the grace — a one-frame phantom
  *  (a face, a mug) should not get to linger. */
@@ -87,6 +88,7 @@ export class HandTracker {
   private landmarker: HandLandmarker | null = null;
   private lastVideoTime = -1;
   private lastInferenceAt = 0;
+  private inferenceInterval = DEFAULT_INFERENCE_INTERVAL_MS;
   private smoothers = new HandSmootherPool(2);
   private grace = new Map<number, GraceEntry>();
   private lastOutput: HandReading[] = [];
@@ -112,6 +114,11 @@ export class HandTracker {
    */
   setSmoothing(minCutoff: number, beta: number) {
     this.smoothers.tune(minCutoff, beta);
+  }
+
+  /** Minimum ms between model inferences; 0 runs on every camera frame. */
+  setInferenceInterval(ms: number) {
+    this.inferenceInterval = Math.max(0, ms);
   }
 
   /** Asks for the camera and loads the model. Throws if either is refused. */
@@ -144,7 +151,7 @@ export class HandTracker {
     }
     // Between inferences the last reading stands. The One Euro filters carry
     // their own clocks, so a 30 Hz feed changes nothing about how they smooth.
-    if (nowMs - this.lastInferenceAt < MIN_INFERENCE_INTERVAL_MS) {
+    if (nowMs - this.lastInferenceAt < this.inferenceInterval) {
       return this.lastOutput;
     }
     this.lastVideoTime = this.video.currentTime;

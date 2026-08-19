@@ -111,6 +111,13 @@ export interface ResponseProfile {
   framesNeeded: number;
   /** How fast volume and brightness chase the expression hand, per frame. */
   expressionGlide: number;
+  /**
+   * Minimum ms between hand-model inferences. In the immediate third of the
+   * slider the model runs on every camera frame — full speed for the player
+   * who asks for it, with the knob that already means that; elsewhere ~30 Hz,
+   * which reads everything a held gesture can say at half the CPU.
+   */
+  inferenceInterval: number;
 }
 
 const mix = (from: number, to: number, amount: number) => from + (to - from) * amount;
@@ -128,6 +135,7 @@ export function responseFor(smoothness: number): ResponseProfile {
     beta: mix(0.08, 0.015, s),
     framesNeeded: Math.round(mix(2, 9, s)),
     expressionGlide: mix(0.3, 0.035, s),
+    inferenceInterval: s < 0.35 ? 0 : 30,
   };
 }
 

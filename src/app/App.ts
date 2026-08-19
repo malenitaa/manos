@@ -162,6 +162,7 @@ export class App {
   private applyResponse() {
     this.response = responseFor(this.settings.smoothness);
     this.tracker.setSmoothing(this.response.minCutoff, this.response.beta);
+    this.tracker.setInferenceInterval(this.response.inferenceInterval);
     this.gestures.setFramesNeeded(this.response.framesNeeded);
   }
 
