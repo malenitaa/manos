@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  base: "/manos/",
   server: { port: 3004, strictPort: true },
   build: {
     assetsInlineLimit(filePath) {
