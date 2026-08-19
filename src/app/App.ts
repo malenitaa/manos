@@ -479,12 +479,13 @@ export class App {
       this.chordSlot = null;
     }
 
-    if (this.settings.duo || hands.length === 0) {
+    // One hand or none: no roles to keep. Deliberately forgetting here means
+    // the deal is read fresh when a second hand arrives — a lone hand must
+    // never pre-claim the chord and leave the real chord hand locked out.
+    // Blips don't land in this branch at all: a briefly-lost hand lingers
+    // from the per-hand grace, so during a flicker there are still two.
+    if (this.settings.duo || hands.length <= 1) {
       this.chordSlot = null;
-      return { playing: hands };
-    }
-    if (hands.length === 1) {
-      this.chordSlot = hands[0].id;
       return { playing: hands };
     }
 
