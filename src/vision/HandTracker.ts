@@ -12,8 +12,12 @@ import { extensionState, flatFallback, mirror, readHand } from "./readHand";
 import { HandSmootherPool } from "./smoothing";
 import type { HandReading } from "./types";
 
-/** Copied out of node_modules by the `copy-wasm` script, so it works offline. */
-const WASM_PATH = "/mediapipe";
+/**
+ * Copied out of node_modules by the `copy-wasm` script, so it works offline.
+ * Resolved against Vite's base so it also works when the app is served under a
+ * sub-path (GitHub Pages). BASE_URL always ends with a slash.
+ */
+const WASM_PATH = `${import.meta.env.BASE_URL}mediapipe`;
 
 const MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
