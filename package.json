@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "copy-wasm": "mkdir -p public/mediapipe && cp node_modules/@mediapipe/tasks-vision/wasm/* public/mediapipe/",
+    "copy-wasm": "node scripts/copy-wasm.mjs",
     "predev": "npm run copy-wasm",
     "prebuild": "npm run copy-wasm",
     "dev": "vite",
