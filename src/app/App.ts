@@ -25,7 +25,7 @@ import { Overlay } from "../ui/Overlay";
 import { Panel } from "../ui/Panel";
 import { SongPanel } from "../ui/SongPanel";
 import { requireElement } from "../ui/dom";
-import { HandTracker } from "../vision/HandTracker";
+import { HandTracker, ModelLoadError } from "../vision/HandTracker";
 import { remap } from "../vision/landmarks";
 import type { HandReading, Side } from "../vision/types";
 import { buildFeedbackLink } from "./feedback";
@@ -252,7 +252,9 @@ export class App {
       this.overlay.showError(
         denied
           ? this.t("app.error.camera")
-          : this.t("app.error.generic", { message: error instanceof Error ? error.message : String(error) }),
+          : error instanceof ModelLoadError
+            ? this.t("app.error.model")
+            : this.t("app.error.generic", { message: describeError(error) }),
       );
       return;
     }
@@ -636,4 +638,15 @@ export class App {
     if (!hasExpressionHand && !this.settings.duo && hands.length === 1) return this.t("hint.second");
     return "";
   }
+}
+
+/**
+ * Something readable for the start-up error line. Anything can be thrown; a bare
+ * Event (what a failed script tag rejects with) would otherwise print as
+ * "[object Event]".
+ */
+function describeError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error instanceof Event) return `${error.type} event`;
+  return String(error);
 }

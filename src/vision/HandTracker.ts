@@ -23,6 +23,18 @@ const MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 
 /**
+ * The model or its WASM runtime could not be loaded. MediaPipe fails by
+ * rejecting with whatever the browser gave it — often a bare `error` Event from
+ * a 404ed script tag — so it is wrapped into a real Error the UI can explain.
+ */
+export class ModelLoadError extends Error {
+  constructor(cause: unknown) {
+    super("Could not load the hand-tracking model", { cause });
+    this.name = "ModelLoadError";
+  }
+}
+
+/**
  * How long a hand keeps playing after the model loses it. Detection drops for a
  * frame or two all the time — a blink of bad light, a hand turning edge on. If
  * the sound cut out every time, the instrument would stutter constantly.
@@ -134,15 +146,19 @@ export class HandTracker {
     this.video.srcObject = stream;
     await this.video.play();
 
-    const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
-    this.landmarker = await HandLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
-      runningMode: "VIDEO",
-      numHands: this.options.maxHands ?? 2,
-      minHandDetectionConfidence: this.options.detectionConfidence ?? 0.5,
-      minHandPresenceConfidence: 0.5,
-      minTrackingConfidence: this.options.trackingConfidence ?? 0.5,
-    });
+    try {
+      const vision = await FilesetResolver.forVisionTasks(WASM_PATH);
+      this.landmarker = await HandLandmarker.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
+        runningMode: "VIDEO",
+        numHands: this.options.maxHands ?? 2,
+        minHandDetectionConfidence: this.options.detectionConfidence ?? 0.5,
+        minHandPresenceConfidence: 0.5,
+        minTrackingConfidence: this.options.trackingConfidence ?? 0.5,
+      });
+    } catch (cause) {
+      throw new ModelLoadError(cause);
+    }
   }
 
   /** Reads the current video frame. Safe to call more often than the camera runs. */

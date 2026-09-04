@@ -10,6 +10,7 @@ export const esDictionary: Dictionary = {
   "app.starting": "encendiendo…",
   "app.waiting": "esperando",
   "app.error.camera": "Hace falta permiso de cámara para poder verte las manos.",
+  "app.error.model": "No se pudo cargar el modelo que reconoce las manos. Revisá la conexión y probá de nuevo.",
   "app.error.generic": "No arrancó: {message}",
   "app.hint.safari": "Un aviso: Safari puede trabarse con la cámara y el sonido. En Chrome o Edge anda mucho más fluido.",
   "app.hint.mobile": "Este instrumento quiere una compu: la cámara del teléfono encuadra muy apretadas las dos manos. Pero mirá con confianza.",

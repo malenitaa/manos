@@ -12,6 +12,7 @@ export const enDictionary = {
   "app.starting": "starting…",
   "app.waiting": "waiting",
   "app.error.camera": "Camera access is needed to see your hands.",
+  "app.error.model": "The hand-tracking model could not be loaded. Check your connection and try again.",
   "app.error.generic": "Could not start: {message}",
   "app.hint.safari": "A heads-up: Safari can stutter under the camera and sound. Chrome or Edge play much more smoothly.",
   "app.hint.mobile": "This instrument really wants a computer — a phone camera frames two hands too tightly. Do look around, though!",
