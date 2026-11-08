@@ -12,8 +12,16 @@ import { isScaleId, isTuning, type ModeId, type Tuning } from "../music/theory";
 
 const STORAGE_KEY = "manos.settings.v1";
 
-/** What plays the instrument: hands read by the camera, or the light it sees. */
-export type Source = "hands" | "light";
+/**
+ * What plays the instrument: hands read by the camera, the light the camera
+ * sees, or light sensors on cables read by an Arduino over USB.
+ */
+export type Source = "hands" | "light" | "cable";
+export const SOURCES: Source[] = ["hands", "light", "cable"];
+
+export function isSource(value: unknown): value is Source {
+  return typeof value === "string" && (SOURCES as string[]).includes(value);
+}
 
 export interface Settings {
   language: Language;
@@ -173,7 +181,7 @@ export function loadSettings(): Settings {
   const data = stored as Record<string, unknown>;
 
   if (isLanguage(data.language)) settings.language = data.language;
-  if (data.source === "hands" || data.source === "light") settings.source = data.source;
+  if (isSource(data.source)) settings.source = data.source;
   if (data.mode === "free" || isScaleId(data.mode)) settings.mode = data.mode;
   if (isTuning(data.tuning)) settings.tuning = data.tuning;
   if (data.voicing === "chords" || data.voicing === "notes") settings.voicing = data.voicing;

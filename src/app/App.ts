@@ -16,6 +16,7 @@ import { Steady } from "../gesture/Steady";
 import { createTranslator, LOCALES, type Translate, type TranslationKey } from "../i18n";
 import { CableBoard, type CableState } from "../light/cables";
 import { LightReader } from "../light/LightReader";
+import { SerialCables, SerialUnsupportedError } from "../light/SerialCables";
 import { MidiOut } from "../midi/MidiOut";
 import { buildChord, buildNote, freePitch, freeStack, type Chord } from "../music";
 import { LETTER_NAMES, SCALES, SOLFEGE_NAMES, type ScaleId } from "../music/theory";
@@ -35,6 +36,13 @@ import { buildFeedbackLink } from "./feedback";
 import { loadSettings, responseFor, saveSettings, type SettingKey, type Settings } from "./settings";
 
 const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount;
+
+/**
+ * How loud light and cable mode play. Four sustained voices stacked at full
+ * level were too much for a room; the hands never push the volume that far
+ * either.
+ */
+const LIGHT_VOLUME = 0.55;
 
 /** Seconds as m:ss. */
 function clock(seconds: number): string {
@@ -66,6 +74,8 @@ export class App {
   private gestures = new GestureReader();
   /** Light mode: the same camera read as four light sensors, and their cables. */
   private light = new LightReader(this.video);
+  /** Cable mode: the same four numbers, from sensors on an Arduino over USB. */
+  private serial = new SerialCables();
   private cables = new CableBoard();
   private overlay = new Overlay();
   private panel: Panel;
@@ -246,26 +256,45 @@ export class App {
   }
 
   /**
-   * Hands and light share the camera but not the model: light mode never
-   * loads it. Switching to hands mid-session loads it then, over the camera
-   * already open.
+   * Each source opens only what it needs: cables never ask for the camera,
+   * light never loads the hand model. Switching mid-session opens the rest
+   * then, over whatever is already running.
    */
+  private async openSource() {
+    switch (this.settings.source) {
+      case "cable":
+        await this.serial.connect();
+        break;
+      case "light":
+        await openCamera(this.video);
+        break;
+      default:
+        if (!this.tracker.ready) await this.tracker.start();
+    }
+  }
+
   private async switchSource() {
     this.synth.releaseAll();
     this.cables.reset();
     this.applyLegendVisibility();
     this.chordMap.render(this.settings, this.family, this.t);
-    if (this.running && this.settings.source === "hands" && !this.tracker.ready) {
-      try {
-        await this.tracker.start();
-      } catch (error) {
-        this.showNotice(
-          error instanceof ModelLoadError
-            ? this.t("app.error.model")
-            : this.t("app.error.generic", { message: describeError(error) }),
-        );
-      }
+    if (!this.running) return;
+    try {
+      await this.openSource();
+    } catch (error) {
+      this.showNotice(this.startErrorMessage(error));
     }
+  }
+
+  private startErrorMessage(error: unknown): string {
+    if (error instanceof ModelLoadError) return this.t("app.error.model");
+    if (error instanceof SerialUnsupportedError) return this.t("app.error.serial.unsupported");
+    if (error instanceof DOMException) {
+      if (error.name === "NotAllowedError") return this.t("app.error.camera");
+      // The port picker was closed without choosing.
+      if (error.name === "NotFoundError") return this.t("app.error.serial");
+    }
+    return this.t("app.error.generic", { message: describeError(error) });
   }
 
   async start() {
@@ -274,22 +303,14 @@ export class App {
     this.overlay.showError("");
     try {
       await this.synth.resume();
-      if (this.settings.source === "light") await openCamera(this.video);
-      else await this.tracker.start();
+      await this.openSource();
       this.overlay.hideStart();
       this.visuals.resize();
       this.running = true;
       requestAnimationFrame((time) => this.frame(time));
     } catch (error) {
       this.overlay.setStarting(false);
-      const denied = error instanceof DOMException && error.name === "NotAllowedError";
-      this.overlay.showError(
-        denied
-          ? this.t("app.error.camera")
-          : error instanceof ModelLoadError
-            ? this.t("app.error.model")
-            : this.t("app.error.generic", { message: describeError(error) }),
-      );
+      this.overlay.showError(this.startErrorMessage(error));
       return;
     }
 
@@ -427,8 +448,8 @@ export class App {
     if (!this.running) return;
     requestAnimationFrame((next) => this.frame(next));
 
-    if (this.settings.source === "light") this.lightFrame();
-    else this.handsFrame(time);
+    if (this.settings.source === "hands") this.handsFrame(time);
+    else this.lightFrame();
 
     // A video take films every frame right after it is drawn.
     if (this.takeKind?.video) {
@@ -440,16 +461,17 @@ export class App {
   }
 
   /**
-   * Light mode's frame. Each strip of the camera lights one cable; the cables
-   * carry their own loudness, so the hand-driven volume and tone sit open.
+   * The frame for light and cables. Each strip of the camera — or each sensor
+   * on the wire — lights one cable; the cables carry their own loudness, so
+   * the hand-driven volume and tone sit open.
    */
   private lightFrame() {
-    const levels = this.light.read();
+    const levels = this.settings.source === "cable" ? this.serial.read() : this.light.read();
     const scale = SCALES[this.settings.mode as ScaleId] ?? SCALES.major;
     const cables = this.cables.update(levels, scale, this.settings.root, this.settings.tuning);
     const sounding = cables.filter((cable) => cable.gain !== null);
 
-    this.volume = 1;
+    this.volume = LIGHT_VOLUME;
     this.brightness = 0.6;
     const muted = this.settings.midi && this.settings.midiMute;
     this.synth.setVolume(muted ? 0 : this.volume);
@@ -483,9 +505,14 @@ export class App {
       NEUTRAL,
     );
     this.visuals.drawWave(NEUTRAL);
-    if (cables.every((cable) => cable.gain === null)) {
-      this.visuals.drawHint(this.t("hint.light"), this.song.hasSong ? 0.26 : 0.14);
-    }
+    const hint = this.lightHint(cables.every((cable) => cable.gain === null));
+    if (hint) this.visuals.drawHint(hint, this.song.hasSong ? 0.26 : 0.14);
+  }
+
+  private lightHint(dark: boolean): string {
+    if (this.settings.source === "cable" && !this.serial.connected) return this.t("hint.cable.connect");
+    if (!dark) return "";
+    return this.t(this.settings.source === "cable" ? "hint.cable" : "hint.light");
   }
 
   private handsFrame(time: number) {
@@ -548,10 +575,15 @@ export class App {
       return this.t("status.recording", { time: clock(seconds) });
     }
     if (time < this.noticeUntil) return this.notice;
+    const voices = this.synth.voiceCount;
     const base =
-      this.settings.source === "light"
-        ? this.t("status.light", { voices: this.synth.voiceCount })
-        : this.t("status.running", { fps: this.tracker.fps, voices: this.synth.voiceCount });
+      this.settings.source === "cable"
+        ? this.serial.connected
+          ? this.t("status.cable", { voices })
+          : this.t("status.cable.waiting")
+        : this.settings.source === "light"
+          ? this.t("status.light", { voices })
+          : this.t("status.running", { fps: this.tracker.fps, voices });
     return this.drums.running ? `${base} · ${this.settings.tempo} bpm` : base;
   }
 

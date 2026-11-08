@@ -11,6 +11,8 @@ export const esDictionary: Dictionary = {
   "app.waiting": "esperando",
   "app.error.camera": "Hace falta permiso de cámara para poder verte las manos.",
   "app.error.model": "No se pudo cargar el modelo que reconoce las manos. Revisá la conexión y probá de nuevo.",
+  "app.error.serial": "No se eligió ningún puerto. Enchufá el Arduino y elegí su puerto cuando te lo pida.",
+  "app.error.serial.unsupported": "Este navegador no puede abrir puertos USB. Chrome o Edge sí.",
   "app.error.generic": "No arrancó: {message}",
   "app.hint.safari": "Un aviso: Safari puede trabarse con la cámara y el sonido. En Chrome o Edge anda mucho más fluido.",
   "app.hint.mobile": "Este instrumento quiere una compu: la cámara del teléfono encuadra muy apretadas las dos manos. Pero mirá con confianza.",
@@ -28,8 +30,12 @@ export const esDictionary: Dictionary = {
   "panel.source": "Quién toca",
   "source.hands": "Manos",
   "source.light": "Luz",
-  "source.hint":
+  "source.cable": "Cables",
+  "source.hands.hint": "Tus manos frente a la cámara tocan acordes, melodías y percusión.",
+  "source.light.hint":
     "Con luz, la cámara pasa a ser cuatro sensores de luz, uno por franja del cuadro, y cada franja toca su propio instrumento: cuanto más brillo, más fuerte; sin luz, silencio. Tapá una franja, prendé una lámpara, dejá pasar una nube.",
+  "source.cable.hint":
+    "Cuatro sensores de luz en cables, leídos por un Arduino enchufado por USB a esta compu. Cada cable es un instrumento, y va donde haga falta leer la luz. Solo Chrome y Edge; el conexionado y el sketch están en docs/cables.md.",
   "cable.bass": "grave",
   "cable.drone": "drone",
   "cable.strings": "cuerdas",
@@ -206,6 +212,8 @@ export const esDictionary: Dictionary = {
   "hint.open": "abrí la mano para que suene",
   "hint.second": "sumá la otra mano para el volumen y el brillo",
   "hint.light": "dejá que llegue algo de luz a la cámara",
+  "hint.cable": "no llega luz a los cables",
+  "hint.cable.connect": "elegí el puerto del Arduino para conectar los cables",
 
   "record.open": "grabar",
   "record.start": "Empezar a grabar",
@@ -249,6 +257,8 @@ export const esDictionary: Dictionary = {
   "status.running": "{fps} fps · {voices} voces",
   "status.recording": "grabando {time}",
   "status.light": "luz · {voices} voces",
+  "status.cable": "cables · {voices} voces",
+  "status.cable.waiting": "cables · sin conexión",
   "label.key": "en {key} {mode}",
   "label.free": "{note} · {voices} · libre",
   "label.voices.one": "1 voz",

@@ -9,7 +9,7 @@
 import { TIMBRE_GROUPS, type TimbreId } from "../audio";
 import { LANGUAGES, LOCALES, type Language, type Translate, type TranslationKey } from "../i18n";
 import { LETTER_NAMES, SOLFEGE_NAMES, TUNINGS, type ModeId, type ScaleGroup } from "../music/theory";
-import { EFFECT_KEYS, RANGES, type EffectKey, type SettingKey, type Settings } from "../app/settings";
+import { EFFECT_KEYS, RANGES, SOURCES, type EffectKey, type SettingKey, type Settings } from "../app/settings";
 import { clear, element } from "./dom";
 
 /** The order scales appear in, and which heading they sit under. */
@@ -102,18 +102,20 @@ export class Panel {
     this.onChange(key, this.settings);
   }
 
-  /** Hands or light: two instruments that share a camera and a sound engine. */
+  /** Hands, light or cables: three instruments sharing one sound engine. */
   private sourceSection(t: Translate): HTMLElement {
     const group = element("div", { className: "segmented" });
+    const hint = element("p", { className: "hint" });
     const buttons: HTMLButtonElement[] = [];
 
     const paint = () => {
       for (const button of buttons) {
         button.classList.toggle("on", button.dataset.source === this.settings.source);
       }
+      hint.textContent = t(`source.${this.settings.source}.hint`);
     };
 
-    for (const source of ["hands", "light"] as const) {
+    for (const source of SOURCES) {
       const button = element("button", { text: t(`source.${source}`), attrs: { type: "button" } });
       button.dataset.source = source;
       button.addEventListener("click", () => {
@@ -126,7 +128,7 @@ export class Panel {
     }
 
     paint();
-    return this.section(t("panel.source"), [group, element("p", { className: "hint", text: t("source.hint") })]);
+    return this.section(t("panel.source"), [group, hint]);
   }
 
   private scaleSection(t: Translate): HTMLElement {

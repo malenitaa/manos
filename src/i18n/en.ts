@@ -13,6 +13,8 @@ export const enDictionary = {
   "app.waiting": "waiting",
   "app.error.camera": "Camera access is needed to see your hands.",
   "app.error.model": "The hand-tracking model could not be loaded. Check your connection and try again.",
+  "app.error.serial": "No port was chosen. Plug in the Arduino and pick its port when asked.",
+  "app.error.serial.unsupported": "This browser cannot open USB ports. Chrome or Edge can.",
   "app.error.generic": "Could not start: {message}",
   "app.hint.safari": "A heads-up: Safari can stutter under the camera and sound. Chrome or Edge play much more smoothly.",
   "app.hint.mobile": "This instrument really wants a computer — a phone camera frames two hands too tightly. Do look around, though!",
@@ -30,8 +32,12 @@ export const enDictionary = {
   "panel.source": "Played by",
   "source.hands": "Hands",
   "source.light": "Light",
-  "source.hint":
+  "source.cable": "Cables",
+  "source.hands.hint": "Your hands in front of the camera play chords, melodies and drums.",
+  "source.light.hint":
     "With light, the camera becomes four light sensors, one per strip of the frame, and each strip plays its own instrument: the brighter, the louder; no light, no sound. Shade a strip, light a lamp, let a cloud pass.",
+  "source.cable.hint":
+    "Four light sensors on cables, read by an Arduino plugged into this computer by USB. Each cable is one instrument, and goes wherever its light should be read. Chrome and Edge only; the wiring and the sketch are in docs/cables.md.",
   "cable.bass": "bass",
   "cable.drone": "drone",
   "cable.strings": "strings",
@@ -208,6 +214,8 @@ export const enDictionary = {
   "hint.open": "open your hand to make it sound",
   "hint.second": "add your other hand for volume and brightness",
   "hint.light": "let some light reach the camera",
+  "hint.cable": "no light on the cables",
+  "hint.cable.connect": "choose the Arduino's port to connect the cables",
 
   "record.open": "record",
   "record.start": "Start recording",
@@ -251,6 +259,8 @@ export const enDictionary = {
   "status.running": "{fps} fps · {voices} voices",
   "status.recording": "recording {time}",
   "status.light": "light · {voices} voices",
+  "status.cable": "cables · {voices} voices",
+  "status.cable.waiting": "cables · not connected",
   "label.key": "in {key} {mode}",
   "label.free": "{note} · {voices} · free",
   "label.voices.one": "1 voice",
