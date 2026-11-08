@@ -7,6 +7,7 @@
  */
 
 import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision";
+import { openCamera } from "./camera";
 import { centroid, PALM, type Point3 } from "./landmarks";
 import { extensionState, flatFallback, mirror, readHand } from "./readHand";
 import { HandSmootherPool } from "./smoothing";
@@ -139,12 +140,7 @@ export class HandTracker {
 
   /** Asks for the camera and loads the model. Throws if either is refused. */
   async start(): Promise<void> {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
-      audio: false,
-    });
-    this.video.srcObject = stream;
-    await this.video.play();
+    await openCamera(this.video);
 
     try {
       const vision = await FilesetResolver.forVisionTasks(WASM_PATH);

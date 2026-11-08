@@ -12,8 +12,12 @@ import { isScaleId, isTuning, type ModeId, type Tuning } from "../music/theory";
 
 const STORAGE_KEY = "manos.settings.v1";
 
+/** What plays the instrument: hands read by the camera, or the light it sees. */
+export type Source = "hands" | "light";
+
 export interface Settings {
   language: Language;
+  source: Source;
   mode: ModeId;
   /** Tonic of the key: 0 is C, 11 is B. */
   root: number;
@@ -62,6 +66,7 @@ export type SettingKey = keyof Settings;
 export function defaultSettings(): Settings {
   return {
     language: detectLanguage(),
+    source: "hands",
     mode: "guided",
     root: 0,
     tuning: 440,
@@ -168,6 +173,7 @@ export function loadSettings(): Settings {
   const data = stored as Record<string, unknown>;
 
   if (isLanguage(data.language)) settings.language = data.language;
+  if (data.source === "hands" || data.source === "light") settings.source = data.source;
   if (data.mode === "free" || isScaleId(data.mode)) settings.mode = data.mode;
   if (isTuning(data.tuning)) settings.tuning = data.tuning;
   if (data.voicing === "chords" || data.voicing === "notes") settings.voicing = data.voicing;

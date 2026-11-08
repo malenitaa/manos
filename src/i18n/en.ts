@@ -27,6 +27,16 @@ export const enDictionary = {
   "panel.hands": "Hands",
   "panel.language": "Language",
 
+  "panel.source": "Played by",
+  "source.hands": "Hands",
+  "source.light": "Light",
+  "source.hint":
+    "With light, the camera becomes four light sensors, one per strip of the frame, and each strip plays its own instrument: the brighter, the louder; no light, no sound. Shade a strip, light a lamp, let a cloud pass.",
+  "cable.bass": "bass",
+  "cable.drone": "drone",
+  "cable.strings": "strings",
+  "cable.voice": "voice",
+
   "group.simple": "Straightforward",
   "group.modes": "Modes",
   "group.world": "Around the world",
@@ -197,6 +207,7 @@ export const enDictionary = {
   "hint.raise": "raise a hand in front of the camera",
   "hint.open": "open your hand to make it sound",
   "hint.second": "add your other hand for volume and brightness",
+  "hint.light": "let some light reach the camera",
 
   "record.open": "record",
   "record.start": "Start recording",
@@ -239,6 +250,7 @@ export const enDictionary = {
 
   "status.running": "{fps} fps · {voices} voices",
   "status.recording": "recording {time}",
+  "status.light": "light · {voices} voices",
   "label.key": "in {key} {mode}",
   "label.free": "{note} · {voices} · free",
   "label.voices.one": "1 voice",

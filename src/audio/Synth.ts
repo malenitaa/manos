@@ -179,14 +179,18 @@ export class Synth {
    * and pitch together, so the same note on two instruments is two voices, and
    * changing one hand's timbre releases only that hand's notes.
    */
-  setNoteGroups(groups: { timbre: TimbreId; frequencies: number[] }[]) {
+  setNoteGroups(groups: { timbre: TimbreId; frequencies: number[]; level?: number }[]) {
     const now = this.context.currentTime;
-    const wanted = new Map<string, { timbre: TimbreId; frequency: number }>();
+    const wanted = new Map<string, { timbre: TimbreId; frequency: number; level?: number }>();
     let count = 0;
     for (const group of groups) {
       for (const frequency of group.frequencies) {
         if (count >= MAX_VOICES) break;
-        wanted.set(`${group.timbre}:${Math.round(frequency * 10)}`, { timbre: group.timbre, frequency });
+        wanted.set(`${group.timbre}:${Math.round(frequency * 10)}`, {
+          timbre: group.timbre,
+          frequency,
+          level: group.level,
+        });
         count++;
       }
     }
@@ -198,9 +202,14 @@ export class Synth {
       }
     }
     for (const [key, note] of wanted) {
-      if (!this.voices.has(key)) {
-        this.voices.set(key, new Voice(this.context, this.input, TIMBRES[note.timbre], note.frequency));
+      let voice = this.voices.get(key);
+      if (!voice) {
+        voice = new Voice(this.context, this.input, TIMBRES[note.timbre], note.frequency);
+        this.voices.set(key, voice);
       }
+      // A group may carry its own loudness, played frame by frame — the light
+      // on a cable. Groups without one keep the envelope's full level.
+      if (note.level !== undefined) voice.setLevel(note.level);
     }
   }
 

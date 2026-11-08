@@ -176,6 +176,60 @@ export class Visuals {
   }
 
   /**
+   * The four cables of light mode: one column per strip of the frame, filled
+   * from the bottom as far as its light reaches, with the instrument's name
+   * and the note it is holding. Dark columns stay empty and nameless.
+   */
+  drawCables(cables: { level: number; name: string; note: string }[], palette: Palette) {
+    const { context } = this;
+    const w = this.width;
+    const h = this.height;
+    const column = w / cables.length;
+    const scale = Math.min(1.4, Math.max(0.7, w / 900));
+
+    context.save();
+    cables.forEach((cable, i) => {
+      const x = i * column;
+      const fill = cable.level * h * 0.6;
+
+      // The light itself, as a glow rising from the floor of the frame.
+      const glow = context.createLinearGradient(0, h, 0, h - fill);
+      glow.addColorStop(0, palette.glow);
+      glow.addColorStop(1, "rgba(0,0,0,0)");
+      context.globalAlpha = 0.28;
+      context.fillStyle = glow;
+      context.fillRect(x, h - fill, column, fill);
+
+      if (i > 0) {
+        context.globalAlpha = 0.14;
+        context.strokeStyle = "#fff";
+        context.lineWidth = 1;
+        context.beginPath();
+        context.moveTo(x, h * 0.3);
+        context.lineTo(x, h);
+        context.stroke();
+      }
+
+      context.textAlign = "center";
+      context.fillStyle = "#fff";
+      context.globalAlpha = 0.5;
+      context.font = `400 ${13 * scale}px ui-sans-serif, system-ui, sans-serif`;
+      context.fillText(cable.name, x + column / 2, h * 0.93);
+
+      if (cable.note) {
+        context.globalAlpha = 0.9;
+        context.fillStyle = palette.main;
+        context.shadowColor = palette.glow;
+        context.shadowBlur = 14;
+        context.font = `600 ${30 * scale}px ui-serif, Georgia, "Times New Roman", serif`;
+        context.fillText(cable.note, x + column / 2, h * 0.88);
+        context.shadowBlur = 0;
+      }
+    });
+    context.restore();
+  }
+
+  /**
    * A short line near the top, for prompts like "raise a hand". The height is
    * a fraction of the frame so the caller can push it below the song strip,
    * which otherwise sits exactly on top of it.

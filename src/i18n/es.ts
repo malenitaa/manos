@@ -25,6 +25,16 @@ export const esDictionary: Dictionary = {
   "panel.hands": "Manos",
   "panel.language": "Idioma",
 
+  "panel.source": "Quién toca",
+  "source.hands": "Manos",
+  "source.light": "Luz",
+  "source.hint":
+    "Con luz, la cámara pasa a ser cuatro sensores de luz, uno por franja del cuadro, y cada franja toca su propio instrumento: cuanto más brillo, más fuerte; sin luz, silencio. Tapá una franja, prendé una lámpara, dejá pasar una nube.",
+  "cable.bass": "grave",
+  "cable.drone": "drone",
+  "cable.strings": "cuerdas",
+  "cable.voice": "voz",
+
   "group.simple": "Sin vueltas",
   "group.modes": "Modos",
   "group.world": "Del mundo",
@@ -195,6 +205,7 @@ export const esDictionary: Dictionary = {
   "hint.raise": "levantá una mano frente a la cámara",
   "hint.open": "abrí la mano para que suene",
   "hint.second": "sumá la otra mano para el volumen y el brillo",
+  "hint.light": "dejá que llegue algo de luz a la cámara",
 
   "record.open": "grabar",
   "record.start": "Empezar a grabar",
@@ -237,6 +248,7 @@ export const esDictionary: Dictionary = {
 
   "status.running": "{fps} fps · {voices} voces",
   "status.recording": "grabando {time}",
+  "status.light": "luz · {voices} voces",
   "label.key": "en {key} {mode}",
   "label.free": "{note} · {voices} · libre",
   "label.voices.one": "1 voz",

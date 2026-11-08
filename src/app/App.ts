@@ -14,6 +14,8 @@ import type { TakeKind } from "../ui/Overlay";
 import { expressionFromHand, familyFromHand, GestureReader, type Family, type PlayIntent } from "../gesture/mapping";
 import { Steady } from "../gesture/Steady";
 import { createTranslator, LOCALES, type Translate, type TranslationKey } from "../i18n";
+import { CableBoard, type CableState } from "../light/cables";
+import { LightReader } from "../light/LightReader";
 import { MidiOut } from "../midi/MidiOut";
 import { buildChord, buildNote, freePitch, freeStack, type Chord } from "../music";
 import { LETTER_NAMES, SCALES, SOLFEGE_NAMES, type ScaleId } from "../music/theory";
@@ -25,6 +27,7 @@ import { Overlay } from "../ui/Overlay";
 import { Panel } from "../ui/Panel";
 import { SongPanel } from "../ui/SongPanel";
 import { requireElement } from "../ui/dom";
+import { openCamera } from "../vision/camera";
 import { HandTracker, ModelLoadError } from "../vision/HandTracker";
 import { remap } from "../vision/landmarks";
 import type { HandReading, Side } from "../vision/types";
@@ -61,6 +64,9 @@ export class App {
   private visuals = new Visuals(this.canvas, this.synth.analyser);
   private tracker = new HandTracker(this.video);
   private gestures = new GestureReader();
+  /** Light mode: the same camera read as four light sensors, and their cables. */
+  private light = new LightReader(this.video);
+  private cables = new CableBoard();
   private overlay = new Overlay();
   private panel: Panel;
   private help: Help;
@@ -142,7 +148,8 @@ export class App {
    * checkbox look dead, because toggling it changed nothing on screen.
    */
   private applyLegendVisibility() {
-    this.overlay.setLegendVisible(this.settings.showLegend);
+    // The legend explains gestures; light has none.
+    this.overlay.setLegendVisible(this.settings.showLegend && this.settings.source === "hands");
   }
 
   /** Pushes every audio-related setting into the engine at once. */
@@ -171,6 +178,9 @@ export class App {
       case "language":
         this.t = createTranslator(this.settings.language);
         this.renderInterface();
+        break;
+      case "source":
+        void this.switchSource();
         break;
       case "timbre":
         this.synth.setTimbre(this.settings.timbre);
@@ -235,13 +245,37 @@ export class App {
     saveSettings(this.settings);
   }
 
+  /**
+   * Hands and light share the camera but not the model: light mode never
+   * loads it. Switching to hands mid-session loads it then, over the camera
+   * already open.
+   */
+  private async switchSource() {
+    this.synth.releaseAll();
+    this.cables.reset();
+    this.applyLegendVisibility();
+    this.chordMap.render(this.settings, this.family, this.t);
+    if (this.running && this.settings.source === "hands" && !this.tracker.ready) {
+      try {
+        await this.tracker.start();
+      } catch (error) {
+        this.showNotice(
+          error instanceof ModelLoadError
+            ? this.t("app.error.model")
+            : this.t("app.error.generic", { message: describeError(error) }),
+        );
+      }
+    }
+  }
+
   async start() {
     if (this.running) return;
     this.overlay.setStarting(true);
     this.overlay.showError("");
     try {
       await this.synth.resume();
-      await this.tracker.start();
+      if (this.settings.source === "light") await openCamera(this.video);
+      else await this.tracker.start();
       this.overlay.hideStart();
       this.visuals.resize();
       this.running = true;
@@ -393,6 +427,68 @@ export class App {
     if (!this.running) return;
     requestAnimationFrame((next) => this.frame(next));
 
+    if (this.settings.source === "light") this.lightFrame();
+    else this.handsFrame(time);
+
+    // A video take films every frame right after it is drawn.
+    if (this.takeKind?.video) {
+      this.drawTakeFrame();
+      if (this.videoRecorder.seconds >= MAX_VIDEO_SECONDS) void this.stopTake();
+    }
+
+    this.overlay.setStatus(this.statusLine(time));
+  }
+
+  /**
+   * Light mode's frame. Each strip of the camera lights one cable; the cables
+   * carry their own loudness, so the hand-driven volume and tone sit open.
+   */
+  private lightFrame() {
+    const levels = this.light.read();
+    const scale = SCALES[this.settings.mode as ScaleId] ?? SCALES.major;
+    const cables = this.cables.update(levels, scale, this.settings.root, this.settings.tuning);
+    const sounding = cables.filter((cable) => cable.gain !== null);
+
+    this.volume = 1;
+    this.brightness = 0.6;
+    const muted = this.settings.midi && this.settings.midiMute;
+    this.synth.setVolume(muted ? 0 : this.volume);
+    this.synth.setBrightness(this.brightness);
+
+    this.synth.setNoteGroups(
+      sounding.map((cable) => ({ timbre: cable.timbre, frequencies: [cable.frequency], level: cable.gain ?? 0 })),
+    );
+    if (this.settings.midi) {
+      this.midi.setNotes(
+        sounding.map((cable) => cable.frequency),
+        this.settings.tuning,
+      );
+      this.midi.setControls(this.volume, this.brightness);
+    }
+
+    this.drawLight(cables);
+  }
+
+  private drawLight(cables: CableState[]) {
+    document.documentElement.style.setProperty("--accent", NEUTRAL.main);
+    const letterFirst = LOCALES[this.settings.language].notation === "letter";
+
+    this.visuals.clear();
+    this.visuals.drawCables(
+      cables.map((cable) => ({
+        level: cable.level,
+        name: this.t(`cable.${cable.id}` as TranslationKey),
+        note: cable.gain === null ? "" : letterFirst ? cable.name : cable.solfege,
+      })),
+      NEUTRAL,
+    );
+    this.visuals.drawWave(NEUTRAL);
+    if (cables.every((cable) => cable.gain === null)) {
+      this.visuals.drawHint(this.t("hint.light"), this.song.hasSong ? 0.26 : 0.14);
+    }
+  }
+
+  private handsFrame(time: number) {
     // Sorted left to right so hand roles stay put when both are on screen.
     const hands = this.tracker.read(time).sort((a, b) => a.palm.x - b.palm.x);
     this.gestures.keepOnly(hands.map((hand) => hand.id));
@@ -444,14 +540,6 @@ export class App {
     if (this.settings.midi) this.midi.setNotes(frequencies, this.settings.tuning);
 
     this.draw(hands, chords, label, frequencies.length > 0, expression !== undefined);
-
-    // A video take films every frame right after it is drawn.
-    if (this.takeKind?.video) {
-      this.drawTakeFrame();
-      if (this.videoRecorder.seconds >= MAX_VIDEO_SECONDS) void this.stopTake();
-    }
-
-    this.overlay.setStatus(this.statusLine(time));
   }
 
   private statusLine(time: number): string {
@@ -460,7 +548,10 @@ export class App {
       return this.t("status.recording", { time: clock(seconds) });
     }
     if (time < this.noticeUntil) return this.notice;
-    const base = this.t("status.running", { fps: this.tracker.fps, voices: this.synth.voiceCount });
+    const base =
+      this.settings.source === "light"
+        ? this.t("status.light", { voices: this.synth.voiceCount })
+        : this.t("status.running", { fps: this.tracker.fps, voices: this.synth.voiceCount });
     return this.drums.running ? `${base} · ${this.settings.tempo} bpm` : base;
   }
 

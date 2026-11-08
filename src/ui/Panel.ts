@@ -62,6 +62,7 @@ export class Panel {
     this.toggleButton.textContent = t("panel.toggle");
     this.toggleButton.setAttribute("aria-label", t("panel.toggle"));
     this.root.append(
+      this.sourceSection(t),
       this.scaleSection(t),
       this.keySection(t),
       this.tuningSection(t),
@@ -99,6 +100,33 @@ export class Panel {
 
   private change(key: SettingKey) {
     this.onChange(key, this.settings);
+  }
+
+  /** Hands or light: two instruments that share a camera and a sound engine. */
+  private sourceSection(t: Translate): HTMLElement {
+    const group = element("div", { className: "segmented" });
+    const buttons: HTMLButtonElement[] = [];
+
+    const paint = () => {
+      for (const button of buttons) {
+        button.classList.toggle("on", button.dataset.source === this.settings.source);
+      }
+    };
+
+    for (const source of ["hands", "light"] as const) {
+      const button = element("button", { text: t(`source.${source}`), attrs: { type: "button" } });
+      button.dataset.source = source;
+      button.addEventListener("click", () => {
+        this.settings.source = source;
+        paint();
+        this.change("source");
+      });
+      buttons.push(button);
+      group.append(button);
+    }
+
+    paint();
+    return this.section(t("panel.source"), [group, element("p", { className: "hint", text: t("source.hint") })]);
   }
 
   private scaleSection(t: Translate): HTMLElement {

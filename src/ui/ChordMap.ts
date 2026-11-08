@@ -33,7 +33,8 @@ export class ChordMap {
     clear(this.root);
     this.chips = [];
 
-    const visible = settings.showMap && settings.mode !== "free";
+    // Light has no fingers to map.
+    const visible = settings.showMap && settings.mode !== "free" && settings.source !== "light";
     this.root.classList.toggle("gone", !visible);
     if (!visible) return;
 

@@ -18,6 +18,8 @@ export class Voice {
   private modulators: OscillatorNode[] = [];
   private modulationGain: GainNode | null = null;
   private amplitude: GainNode;
+  /** A steady loudness on top of the envelope, for notes whose volume is played. */
+  private level: GainNode;
   private fmRatio = 0;
   private released = false;
 
@@ -34,7 +36,10 @@ export class Voice {
 
     this.amplitude = context.createGain();
     this.amplitude.gain.value = 0;
-    this.amplitude.connect(destination);
+    this.level = context.createGain();
+    this.level.gain.value = 1;
+    this.amplitude.connect(this.level);
+    this.level.connect(destination);
 
     const filter = context.createBiquadFilter();
     filter.type = "lowpass";
@@ -119,6 +124,11 @@ export class Voice {
     }
   }
 
+  /** 0 to 1, followed smoothly. The envelope keeps shaping the note underneath. */
+  setLevel(value: number, seconds = 0.15) {
+    this.level.gain.setTargetAtTime(Math.min(1, Math.max(0, value)), this.context.currentTime, seconds);
+  }
+
   /** Lets the note go. Returns how many seconds until it is fully silent. */
   release(): number {
     if (this.released) return 0;
@@ -155,5 +165,6 @@ export class Voice {
       node.disconnect();
     }
     this.amplitude.disconnect();
+    this.level.disconnect();
   }
 }
