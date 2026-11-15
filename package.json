@@ -5,11 +5,9 @@
   "type": "module",
   "scripts": {
     "copy-wasm": "node scripts/copy-wasm.mjs",
-    "predev": "npm run copy-wasm",
-    "prebuild": "npm run copy-wasm",
-    "dev": "vite",
+    "dev": "npm run copy-wasm && vite",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run copy-wasm && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run"
   },
@@ -18,7 +16,7 @@
   },
   "devDependencies": {
     "typescript": "^5.9.3",
-    "vite": "^7.1.12",
+    "vite": "^7.3.7",
     "vitest": "^4.1.12"
   }
 }

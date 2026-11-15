@@ -9,15 +9,16 @@ intentions.
 
 | Surface | Access | Written by |
 | --- | --- | --- |
-| Camera | Read, live, while the instrument runs (`getUserMedia`, video only) | Nothing — frames are drawn to a local canvas and discarded |
+| Camera | Read, live, once you play with hands or light (`getUserMedia`, video only); a session that only uses cables never opens it | Nothing — frames are drawn to a local canvas and discarded |
 | Microphone | Read, **only** while a "with my voice" recording is running | Nothing — the audio is mixed into the file you save, never played to the speakers |
 | `localStorage["manos.settings.v1"]` | Read/write | The app — your control-panel choices |
 | `localStorage["manos.song.v1"]` | Read/write | The app — the chord chart you pasted and your chosen key |
 | Your disk | Write, only when you stop a recording | The WAV or video file, through the browser's ordinary download flow |
 | MIDI outputs | Write (notes and control changes), only when you tick the MIDI box; SysEx is disabled | — |
+| One serial port (Web Serial) | Read only, in cable mode: the USB port you pick in the browser's picker, or one you granted before, reopened without asking; nothing is ever written to it | Nothing — each line becomes four light levels and is discarded |
 
 That is the complete list — verified by reading every `getUserMedia`, storage,
-download and MIDI call in the source.
+download, MIDI and serial call in the source.
 
 ## Network
 
