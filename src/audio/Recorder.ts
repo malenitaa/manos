@@ -11,7 +11,11 @@
 
 import workletUrl from "./recorder-processor.js?url";
 
-/** Stop on our own after this long, so a forgotten recording cannot eat the tab. */
+/**
+ * A take holds at most this long, so a forgotten recording cannot eat the tab.
+ * Past it the recorder keeps the take but captures nothing more; the App sees
+ * `isFull` and stops the take, which saves it like a manual stop.
+ */
 const MAX_SECONDS = 10 * 60;
 
 const BYTES_PER_SAMPLE = 3; // 24-bit
@@ -38,6 +42,11 @@ export class Recorder {
   /** Seconds captured so far. */
   get seconds(): number {
     return this.frames / this.context.sampleRate;
+  }
+
+  /** Whether the take has reached its length limit and should be stopped. */
+  get isFull(): boolean {
+    return this.seconds >= MAX_SECONDS;
   }
 
   /**
@@ -70,11 +79,10 @@ export class Recorder {
       outputChannelCount: [CHANNELS],
     });
     node.port.onmessage = (event: MessageEvent<{ left: Float32Array; right: Float32Array }>) => {
-      if (this.state !== "recording") return;
+      if (this.state !== "recording" || this.isFull) return;
       this.left.push(event.data.left);
       this.right.push(event.data.right);
       this.frames += event.data.left.length;
-      if (this.seconds >= MAX_SECONDS) this.stop();
     };
 
     this.source.connect(node);

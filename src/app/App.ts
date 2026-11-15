@@ -455,6 +455,8 @@ export class App {
     if (this.takeKind?.video) {
       this.drawTakeFrame();
       if (this.videoRecorder.seconds >= MAX_VIDEO_SECONDS) void this.stopTake();
+    } else if (this.takeKind && this.recorder.isFull) {
+      void this.stopTake();
     }
 
     this.overlay.setStatus(this.statusLine(time));
