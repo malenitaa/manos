@@ -1,8 +1,6 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  // GitHub Pages serves the app under /manos/; Vercel (and local dev) at the root.
-  base: process.env.GITHUB_ACTIONS ? "/manos/" : "/",
   server: { port: 3004, strictPort: true },
   build: {
     assetsInlineLimit(filePath) {
