@@ -28,10 +28,12 @@ by the browser. Everything else is served from the site's own origin. There
 are no audio files (every sound is synthesized live), no web fonts, and no
 third-party scripts.
 
-This is enforced rather than promised: the deployed site ships a
-Content-Security-Policy whose `connect-src` allows only the site itself and
-that single host. A future feature that tried to phone anywhere else would
-fail loudly until the policy was consciously widened.
+This is enforced rather than promised: the deployed site
+([manos-instrument.vercel.app](https://manos-instrument.vercel.app), the only
+deployment) ships a Content-Security-Policy, set in `vercel.json`, whose
+`connect-src` allows only the site itself and that single host. A future
+feature that tried to phone anywhere else would fail loudly until the policy
+was consciously widened.
 
 ## What it never does
 
